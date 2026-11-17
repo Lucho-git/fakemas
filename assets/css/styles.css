@@ -191,11 +191,12 @@ body{
   #fs{bottom:66px;right:12px}
   .slide{padding:16px}
   .nn-grid{gap:8px}
-  .nn{padding:8px 6px 6px}
-  .nn .sil{font-size:2rem}
+  .nn{padding:8px 6px 6px;overflow:hidden}
+  .nn .sil{font-size:1.7rem}
   .nn .nm{font-size:.8rem}
   .nn .stamp{font-size:.8rem;bottom:6px}
-  .hint{margin-top:8px;font-size:.9rem}
+  .hint{margin-top:5px;font-size:.85rem}
+  .ribbon{padding:.4em 1.4em;margin:.35em 0;font-size:1rem}
   .stage{min-height:clamp(150px,26vh,240px)}
 }
 
