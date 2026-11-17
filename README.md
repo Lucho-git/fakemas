@@ -1,5 +1,7 @@
 # Fakemas — The Ross Family Christmas Quiz
 
+**Live: <https://lucho-git.github.io/fakemas/>**
+
 A self-contained, static slide deck for the Fakemas event. No build step, no
 dependencies (fonts load from Google Fonts, everything else is local).
 
@@ -20,7 +22,11 @@ assets/audio/jingle.mp3   background jingle (loops)
 
 ## Run it
 
-Open `index.html` directly in a browser, or serve the folder:
+The deck is published with GitHub Pages from the `main` branch root, so every
+push to `main` redeploys <https://lucho-git.github.io/fakemas/> in about a minute.
+
+To run it locally (and preview changes before pushing), open `index.html`
+directly in a browser, or serve the folder:
 
 ```
 python -m http.server 8123
