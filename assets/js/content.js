@@ -30,7 +30,28 @@ const quiz = [
   {q:"Which of the Ross children is considered the heir of the family, and will be inheriting the 15 Swansea Street, East Victoria Park property?", a:"Lachlan Forest Ross, formal heir of the Ross family.", icon:"👑🏡", long:true}
 ];
 
-/* Part 3 — riddles. `ask` is optional; `media` works the same way as the quiz. */
+/* Part 2 — general Christmas trivia, not family-specific.
+   Same shape as `quiz`, so `media` and `long:true` work here too. */
+const trivia = [
+  {q:"In “The 12 Days of Christmas”, what gift arrives on the ninth day?", a:"Nine ladies dancing.", icon:"🎁💃"},
+  {q:"Which country is usually credited with starting the Christmas tree tradition?", a:"Germany.", icon:"🎄"},
+  {q:"What is traditionally hidden inside a Christmas pudding for luck?", a:"A small coin — a sixpence.", icon:"🪙"},
+  {q:"What is the Grinch's dog called?", a:"Max.", icon:"🐕"},
+  {q:"In Home Alone, which city does the family fly to when they leave Kevin behind?", a:"Paris.", icon:"✈️"},
+  {q:"Frosty the Snowman had a nose made of what?", a:"A button.", icon:"⛄"},
+  {q:"Which three spirits visit Ebenezer Scrooge?", a:"The Ghosts of Christmas Past, Christmas Present and Christmas Yet to Come.", icon:"👻", long:true},
+  {q:"Which plant is hung up so people can kiss underneath it?", a:"Mistletoe.", icon:"🌿"},
+  {q:"Which of Santa's reindeer has a name meaning “thunder” in German?", a:"Donner.", icon:"🌩️"},
+  {q:"According to Buddy in Elf, what are an elf's four main food groups?", a:"Candy, candy canes, candy corn and syrup.", icon:"🍬", long:true},
+  {q:"Which country sends London the giant Christmas tree for Trafalgar Square each year?", a:"Norway.", icon:"🌲"},
+  {q:"“Jingle Bells” was originally written to celebrate which holiday?", a:"Thanksgiving — not Christmas!", icon:"🔔", long:true},
+  {q:"What is the name of the snowman in Frozen?", a:"Olaf.", icon:"☃️"},
+  {q:"Which country made fried chicken a Christmas Eve tradition?", a:"Japan.", icon:"🍗"},
+  {q:"In The Polar Express, what is the name of the boy who receives the bell?", a:"He never gets one — he is only ever “Hero Boy”.", icon:"🚂", long:true},
+  {q:"Which Christmas song is the best-selling single of all time?", a:"White Christmas, by Bing Crosby.", icon:"🎵", long:true}
+];
+
+/* Part 4 — riddles. `ask` is optional; `media` works the same way as the quiz. */
 const riddles = [
   {lines:["Snip and loop, then loop and snip,","Round the room from tip to tip.","Each year longer, never done,","Linking Christmas, one by one."], ask:"What are we?", a:"Paper daisy chain", icon:"🔗"},
   {lines:["A flash of red up on the roof.","Then gone, and that's the proof.","He drops some items upon the ground","That won't stay long, so look around!"], ask:"What did Santa leave behind?", a:"Disappearing Candy", icon:"🍬"},
@@ -38,7 +59,7 @@ const riddles = [
   {lines:["Dad's in his Santa hat, Mum's got her drink,","Nobody's dry, and nobody's in the sink.","We're up to our shoulders in festive delight.","Where are we, on Christmas Day, in the sunlight?"], ask:"", a:"Pop up pool", icon:"🦩🌊"}
 ];
 
-/* Part 4 — guess the Christmas movie scene.
+/* Part 5 — guess the Christmas movie scene.
    `file` lives in assets/img/movies/, `title` is the answer revealed on Space. */
 const movieScenes = [
   {file:"bad-santa.jpg", title:"Bad Santa"},
@@ -50,7 +71,7 @@ const movieScenes = [
   {file:"elf.jpg", title:"Elf"}
 ];
 
-/* Part 5 — naughty or nice cards. v: "naughty" | "nice" */
+/* Part 6 — naughty or nice cards. v: "naughty" | "nice" */
 const people = [
   {n:"Tom", v:"naughty", i:"👤"},
   {n:"Vic", v:"naughty", i:"👤"},

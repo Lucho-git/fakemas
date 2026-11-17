@@ -30,6 +30,23 @@ const part = (n, t, ic = "🎄") => `
   <div class="holly">${ic}</div>
 </section>`;
 
+/* One question slide: badge, question, then a click/Space reveal. */
+const questionSlide = (x, i) => `
+<section class="slide">
+  <div class="qbadge">Q${i + 1}</div>
+  <div class="parch">
+    <h2 class="q" style="padding-top:clamp(36px,6vw,20px)">${x.q}</h2>
+    <div class="stage">
+      ${mystery("Reveal answer", "🎁")}
+      <div class="rv" data-rv>
+        ${media(x.media)}
+        <div class="art">${x.icon}</div>
+        <div class="answer ${x.long ? "long" : ""}">A: ${x.a}</div>
+      </div>
+    </div>
+  </div>
+</section>`;
+
 function buildSlides() {
   const slides = [];
 
@@ -67,11 +84,12 @@ function buildSlides() {
     <h2 class="script" style="font-weight:400;font-size:clamp(1.8rem,4.2vw,3.1rem);color:var(--red-d);text-shadow:none;margin-bottom:10px">Presentation Overview</h2>
     <ul class="list">
       <li><span class="ic">🎁</span>Part 1: Family Christmas Quiz</li>
-      <li><span class="ic">📜</span>Part 2: Mum &amp; Dad's Naughty List</li>
-      <li><span class="ic">❓</span>Part 3: Christmas Riddles</li>
-      <li><span class="ic">🎬</span>Part 4: Guess the Movie Scene</li>
-      <li><span class="ic">😇</span>Part 5: Naughty or Nice?</li>
-      <li><span class="ic">🎀</span>Part 6: Special Gifts</li>
+      <li><span class="ic">🔔</span>Part 2: Christmas Trivia</li>
+      <li><span class="ic">📜</span>Part 3: Mum &amp; Dad's Naughty List</li>
+      <li><span class="ic">❓</span>Part 4: Christmas Riddles</li>
+      <li><span class="ic">🎬</span>Part 5: Guess the Movie Scene</li>
+      <li><span class="ic">😇</span>Part 6: Naughty or Nice?</li>
+      <li><span class="ic">🎀</span>Part 7: Special Gifts</li>
       <li><span class="ic">🌴</span>Bonus: Lach &amp; Eleanor's Philippines Trip</li>
     </ul>
   </div>
@@ -86,26 +104,21 @@ function buildSlides() {
   <div style="font-size:clamp(4rem,10vw,7rem)">📱🎄</div>
 </section>`);
 
-  quiz.forEach((x, i) => {
-    slides.push(`
-<section class="slide">
-  <div class="qbadge">Q${i + 1}</div>
-  <div class="parch">
-    <h2 class="q" style="padding-top:clamp(36px,6vw,20px)">${x.q}</h2>
-    <div class="stage">
-      ${mystery("Reveal answer", "🎁")}
-      <div class="rv" data-rv>
-        ${media(x.media)}
-        <div class="art">${x.icon}</div>
-        <div class="answer ${x.long ? "long" : ""}">A: ${x.a}</div>
-      </div>
-    </div>
-  </div>
-</section>`);
-  });
+  quiz.forEach((x, i) => slides.push(questionSlide(x, i)));
 
-  // Part 2
-  slides.push(part(2, "Mum &amp; Dad's<br>Naughty List", "📜"));
+  // Part 2 – general Christmas trivia
+  slides.push(part(2, "Christmas<br>Trivia", "🔔🧦🔔"));
+  slides.push(`
+<section class="slide">
+  <div class="title-xl">Christmas<br>Trivia</div>
+  <div class="ribbon">16 Questions on Christmas Itself</div>
+  <div style="font-size:clamp(4rem,10vw,7rem)">🍗🎄</div>
+</section>`);
+
+  trivia.forEach((x, i) => slides.push(questionSlide(x, i)));
+
+  // Part 3
+  slides.push(part(3, "Mum &amp; Dad's<br>Naughty List", "📜"));
   slides.push(`
 <section class="slide">
   <div class="parch" style="width:min(760px,100%)">
@@ -136,8 +149,8 @@ function buildSlides() {
   </div>
 </section>`);
 
-  // Part 3
-  slides.push(part(3, "Christmas Riddles<br>&amp; Quiz", "❓🎄"));
+  // Part 4
+  slides.push(part(4, "Christmas Riddles<br>&amp; Quiz", "❓🎄"));
   riddles.forEach((r, i) => {
     slides.push(`
 <section class="slide">
@@ -157,8 +170,8 @@ function buildSlides() {
 </section>`);
   });
 
-  // Part 4
-  slides.push(part(4, "Guess the<br>Movie Scene", "🎬🍿"));
+  // Part 5
+  slides.push(part(5, "Guess the<br>Movie Scene", "🎬🍿"));
   movieScenes.forEach((m, i) => {
     slides.push(`
 <section class="slide movie">
@@ -175,8 +188,8 @@ function buildSlides() {
 </section>`);
   });
 
-  // Part 5
-  slides.push(part(5, "Naughty or Nice?", "😈😇"));
+  // Part 6
+  slides.push(part(6, "Naughty or Nice?", "😈😇"));
   slides.push(`
 <section class="slide">
   <div class="script" style="font-size:clamp(2.6rem,6vw,4.6rem)">Naughty or Nice?</div>
@@ -193,8 +206,8 @@ function buildSlides() {
   <p class="hint">Click a card to stamp it &nbsp;·&nbsp; or press <b>Space</b> to stamp the next one</p>
 </section>`);
 
-  // Part 6
-  slides.push(part(6, "Special Gifts", "🎁🎀"));
+  // Part 7
+  slides.push(part(7, "Special Gifts", "🎁🎀"));
 
   slides.push(`
 <section class="slide">

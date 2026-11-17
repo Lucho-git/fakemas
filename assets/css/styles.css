@@ -229,6 +229,8 @@ body{
   .nn .nm{font-size:.8rem}
   .nn-grid{gap:8px}
   .riddle{font-size:1.05rem;line-height:1.4}
+  .list{gap:5px;margin-top:6px}
+  .list li{padding:4px 10px;font-size:clamp(.95rem,1.8vw,1.2rem)}
   .parch h2.q{font-size:clamp(1.15rem,2.8vw,1.9rem)}
   .movie-shot img{max-height:clamp(150px,32vh,300px)}
 }

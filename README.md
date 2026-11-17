@@ -39,19 +39,21 @@ then visit <http://127.0.0.1:8123/>.
 Everything you normally want to change is in [content.js](assets/js/content.js):
 
 - `EVENT` — teaser name and date shown on the opening slide.
-- `quiz` — Part 1 questions (12 of them). `long:true` shrinks the answer text
-  for wordy answers.
-- `riddles` — Part 3. `lines` are printed one per line; `ask` is optional.
-- `people` — Part 5 cards. `v` is `"naughty"` or `"nice"`.
-- `movieScenes` — Part 4, the "guess the movie scene" game (see below).
+- `quiz` — Part 1, the family questions (12 of them).
+- `trivia` — Part 2, general Christmas trivia (16 of them). Same shape as
+  `quiz`, so `long:true` shrinks wordy answers and `media` still works.
+- `riddles` — Part 4. `lines` are printed one per line; `ask` is optional.
+- `people` — Part 6 cards. `v` is `"naughty"` or `"nice"`.
+- `movieScenes` — Part 5, the "guess the movie scene" game (see below).
 - `trip` — the bonus section, the Philippines slideshow (see below).
 
-If you add or remove quiz questions, update the "12 Questions…" ribbon in
-[slides.js](assets/js/slides.js) to match — slide numbers look after themselves.
+If you add or remove questions, update the matching ribbon in
+[slides.js](assets/js/slides.js) ("12 Questions…" / "16 Questions…") — slide
+numbers look after themselves.
 
 ## Guess the Movie Scene
 
-Part 4 is a seven-scene film round. Each picture is a still from a Christmas
+Part 5 is a seven-scene film round. Each picture is a still from a Christmas
 movie, the slide asks *"Which Christmas movie is this from?"*, and `Space`
 reveals the title. The list lives in `movieScenes` in
 [content.js](assets/js/content.js):
