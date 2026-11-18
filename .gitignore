@@ -17,3 +17,6 @@ Desktop.ini
 # Your own (bought) music: plays locally, never published
 **/assets/audio/local/*
 !**/assets/audio/local/.gitkeep
+
+# Cloudflare Wrangler working files
+.wrangler/

@@ -1,0 +1,9 @@
+{
+  // Cloudflare serves this folder as a static site: there is no build step and no
+  // Worker code. Files listed in .assetsignore are left out of the upload.
+  "name": "luchodore",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./"
+  }
+}

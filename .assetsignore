@@ -1,0 +1,11 @@
+# Files Cloudflare should not publish with the site (same syntax as .gitignore).
+.git
+.gitignore
+.assetsignore
+.claude
+.wrangler
+node_modules
+wrangler.jsonc
+README.md
+**/README.md
+**/.gitkeep
