@@ -27,6 +27,11 @@
 <button id="scores-btn" aria-label="Scoreboard" aria-expanded="false" aria-controls="scores" title="Scoreboard (S)">🏆<span class="sb-lbl"> Scores</span></button>
 <aside id="scores" aria-label="Scoreboard" hidden></aside>
 <aside id="music-menu" aria-label="Music" hidden></aside>
+<aside id="yt-dock" aria-label="Now playing on YouTube" data-corner="br" hidden>
+  <button id="yt-move" type="button" aria-label="Move the player to another corner" title="Move the player to another corner">⤢</button>
+  <div class="yt-frame" data-channel="jingle"><div id="yt-jingle"></div></div>
+  <div class="yt-frame" data-channel="trip"><div id="yt-trip"></div></div>
+</aside>
 <button id="fs" aria-label="Toggle fullscreen">⛶<span class="fs-lbl"> Fullscreen</span></button>
 <audio id="jingle-audio" preload="auto"></audio>
 <audio id="trip-audio" preload="auto"></audio>

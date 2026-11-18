@@ -11,24 +11,26 @@ const players = ["Tom", "Vic", "Jev", "Ella", "Mum", "Dad"];
 /* Music.
    `playlist` is the background music for the whole deck: the songs play in a shuffled
    order and none repeats until every one has had a turn. `slideshow` plays instead
-   during the Philippines photos and pop quiz.
+   during the Philippines photos and pop quiz. `title` is what the ♪ menu shows.
 
-   Bought songs are not part of this project. Save your own MP3s into
-   assets/audio/local/ under exactly these file names and they will be picked up; that
-   folder is left out of git, so they are never published to the public website.
-   Any file that is missing is skipped. With none there, the generated stand-in at
-   the bottom of each list plays instead. `title` is what the ♪ menu shows.            */
+   A track is one of:
+     { title, youtube: "VIDEO_ID" }  streamed from YouTube through its own player, which
+                                     sits in a small dock on screen. The ID is the part
+                                     after "watch?v=" in the video's address. Needs internet.
+     { title, file: "assets/audio/…mp3" }  an audio file in this project.
+   The generated stand-in at the bottom of each list only plays when nothing above it
+   can (no internet, or a video that will not play on other websites).                 */
 const music = {
   playlist: [
-    {title: "A Nonsense Christmas — Sabrina Carpenter", file: "assets/audio/local/a-nonsense-christmas.mp3"},
-    {title: "Mistletoe — Justin Bieber",                file: "assets/audio/local/mistletoe.mp3"},
-    {title: "Merry Christmas, Happy Holidays — *NSYNC", file: "assets/audio/local/happy-holidays.mp3"},
-    {title: "Take Me Home for Christmas",               file: "assets/audio/local/take-me-home-for-christmas.mp3"},
-    {title: "Jingle Bells (synth stand-in)",            file: "assets/audio/jingle.mp3"}
+    {title: "A Nonsense Christmas — Sabrina Carpenter",   youtube: "s_eCNuHS6kk"},
+    {title: "Mistletoe — Justin Bieber",                  youtube: "LUjn3RpkcKY"},
+    {title: "Merry Christmas, Happy Holidays — *NSYNC",   youtube: "wKj92352UAE"},
+    {title: "take me home (4 christmas) — Olivia Rodrigo", youtube: "uXymCnWk9LI"},
+    {title: "Jingle Bells (synth stand-in)",              file: "assets/audio/jingle.mp3"}
   ],
   slideshow: [
-    {title: "Bebot — Black Eyed Peas",                  file: "assets/audio/local/bebot.mp3"},
-    {title: "Slideshow loop (synth stand-in)",          file: "assets/audio/trip.mp3"}
+    {title: "Bebot — The Black Eyed Peas",                youtube: "wESgcExetso"},
+    {title: "Slideshow loop (synth stand-in)",            file: "assets/audio/trip.mp3"}
   ]
 };
 
@@ -62,7 +64,6 @@ const quiz = [
   {q:"Who makes the most cocktails on Christmas Day?", a:"Dad.", icon:"🍸",
    options:["Mum", "Dad", "Tom", "Vic"], correct:"Dad",
    fx:{photos:[{src:"assets/img/people/dad.jpg", alt:"Dad"}], effect:"fly"}},
-  {q:"Which family member is most likely to hoard the Christmas clothes?", a:"Tom.", icon:"🧥"},
   {q:"Who buys the Christmas clothes?", a:"Angela.", icon:"🛍️",
    fx:{photos:[{src:"assets/img/people/angela.jpg", alt:"Angela"}], effect:"swivel"}},
   {q:"Who has missed the most family Christmases?", a:"Ella.", icon:"🗓️",

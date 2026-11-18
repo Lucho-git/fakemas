@@ -21,7 +21,7 @@ assets/img/birds/         the bird round
 assets/video/             video clips
 assets/audio/jingle.mp3   background jingle (loops)
 assets/audio/trip.mp3     stand-in music for the Philippines slideshow
-assets/audio/local/       your own songs — not in git, never published
+assets/audio/local/       optional: your own audio files — not in git, never published
 ```
 
 ## Run it
@@ -222,11 +222,10 @@ Music is set in `music` at the top of [content.js](assets/js/content.js):
 
 ```js
 const music = {
-  playlist:  [{ title: "A Nonsense Christmas — Sabrina Carpenter",
-                file:  "assets/audio/local/a-nonsense-christmas.mp3" },
+  playlist:  [{ title: "A Nonsense Christmas — Sabrina Carpenter", youtube: "s_eCNuHS6kk" },
               ...
               { title: "Jingle Bells (synth stand-in)", file: "assets/audio/jingle.mp3" }],
-  slideshow: [{ title: "Bebot — Black Eyed Peas", file: "assets/audio/local/bebot.mp3" },
+  slideshow: [{ title: "Bebot — The Black Eyed Peas", youtube: "wESgcExetso" },
               { title: "Slideshow loop (synth stand-in)", file: "assets/audio/trip.mp3" }]
 };
 ```
@@ -236,25 +235,35 @@ const music = {
 - **`slideshow`** takes over on the "brought to you by" slide, plays through
   the photos and the pop quiz, and hands back when the movie round starts.
 
-**Your own songs go in `assets/audio/local/`**, saved under exactly the file
-names listed. Bought songs are not part of this project, and that folder is in
-`.gitignore`, so they play on the computer you present from but are never
-pushed to the public website. A file that is missing is skipped. If none are
-there, the two generated stand-ins play instead: `jingle.mp3` (30 seconds of
-*Jingle Bells*) and `trip.mp3` (a 37-second tropical-house style loop), both
-synthesised for this deck with no licensing strings. That is also what the
-live website plays.
+**YouTube tracks.** `youtube: "VIDEO_ID"` streams the song from YouTube through
+YouTube's own embedded player; nothing is downloaded or stored in this project.
+The ID is the part after `watch?v=` in the video's address. Things to know:
+
+- It needs an internet connection.
+- The player has to stay on screen while it plays, so it sits in a small dock
+  in a corner. The ⤢ button on the dock moves it to another corner if it is
+  covering something; the choice is remembered.
+- YouTube decides what plays: it may show an advert first, and a video's owner
+  can switch off playing on other websites. A track that will not play is
+  skipped.
+
+**Audio files.** `file: "assets/audio/…mp3"` plays a file from this project.
+`jingle.mp3` (30 seconds of *Jingle Bells*) and `trip.mp3` (a 37-second
+tropical-house style loop) were synthesised for this deck with no licensing
+strings. They are the stand-ins at the bottom of each list and only play when
+nothing above them can — no internet, for instance. Your own files can also go
+in `assets/audio/local/`, which is left out of git and so never published.
 
 Music starts on the first click or keypress — browsers block audio until the
 presenter interacts.
 
 **The ♪ menu.** Clicking ♪ opens a small menu: which list is playing
 (background or slideshow), the song that is on now, a button for every song
-that is actually there (click one to switch to it), and a mute switch. `M`
-mutes and unmutes without opening it; `Esc` closes it. `title` is the name each
-song is shown under. Any
-slide with `data-music="trip"` uses the slideshow list. Volumes are the last
-argument of the two `makeChannel(...)` lines in [app.js](assets/js/app.js).
+(click one to switch to it), and a mute switch. `M` mutes and unmutes without
+opening it; `Esc` closes it. `title` is the name each song is shown under.
+
+Volumes are the number near the end of the two `makeChannel(...)` lines in
+[app.js](assets/js/app.js).
 
 ## Adding photos & video
 

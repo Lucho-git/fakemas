@@ -385,34 +385,59 @@ deck.addEventListener("click", (e) => {
 
 /* ============ MUSIC ============ */
 // Two channels (see `music` in content.js): the background playlist, and the slideshow
-// music that takes over on slides marked data-music="trip". The ♪ button opens a menu
-// showing what is playing, with a button per song and a mute switch.
+// music that takes over on slides marked data-music="trip". A track is either a YouTube
+// video, streamed through YouTube's own embedded player (shown in a small dock), or an
+// audio file. The ♪ button opens a menu of what is playing, with a button per song.
 const jingleBtn = document.getElementById("jingle");
 const musicMenu = document.getElementById("music-menu");
+const ytDock = document.getElementById("yt-dock");
 const STAND_IN = /assets\/audio\/(jingle|trip)\.mp3$/; // the generated tracks
 const asTrack = (t) => (typeof t === "string"
   ? {file: t, title: t.split("/").pop().replace(/\.\w+$/, "").replace(/-/g, " ")}
   : t);
 
-// Which of these files are really there? (Only a web server can be asked; opened straight
-// from disk we find out when a song fails to play.)
+// Which audio files are really there? (Only a web server can be asked; opened straight
+// from disk we find out when a song fails to play.) YouTube tracks are taken on trust.
 async function present(list) {
   const tracks = list.map(asTrack);
   if (!/^https?:$/.test(location.protocol)) return tracks;
   const found = await Promise.all(tracks.map((t) =>
-    fetch(t.file, {method: "HEAD"}).then((r) => r.ok, () => false)));
+    (t.youtube ? true : fetch(t.file, {method: "HEAD"}).then((r) => r.ok, () => false))));
   return tracks.filter((_, k) => found[k]);
 }
 
-// A channel plays its tracks on one <audio> element: shuffled, each once per round.
+// YouTube's player script, fetched once and only if a track needs it. Rejects when it
+// cannot be reached (no internet), and the channels then fall back to their audio files.
+let ytApiPromise = null;
+function ytApi() {
+  if (!ytApiPromise) {
+    ytApiPromise = new Promise((resolve, reject) => {
+      if (window.YT && window.YT.Player) { resolve(); return; }
+      const giveUp = setTimeout(() => reject(new Error("YouTube did not load")), 10000);
+      window.onYouTubeIframeAPIReady = () => { clearTimeout(giveUp); resolve(); };
+      const script = document.createElement("script");
+      script.src = "https://www.youtube.com/iframe_api";
+      script.onerror = () => { clearTimeout(giveUp); reject(new Error("YouTube is unreachable")); };
+      document.head.append(script);
+    });
+  }
+  return ytApiPromise;
+}
+
+// A channel plays its tracks one at a time: shuffled, each once per round.
 // The generated stand-in only plays when there is nothing else.
-function makeChannel(el, tracks, volume, label) {
-  let pool = tracks.filter((t) => !STAND_IN.test(t.file));
-  const standIn = tracks.find((t) => STAND_IN.test(t.file)) || null;
+function makeChannel(name, el, tracks, volume, label) {
+  let pool = tracks.filter((t) => !(t.file && STAND_IN.test(t.file)));
+  const standIn = tracks.find((t) => t.file && STAND_IN.test(t.file)) || null;
   let queue = [];
   let now = null;
+  let wantPlaying = false;
+  let yt = null;            // this channel's YouTube player, made when first needed
+  let ytReady = false;
+  let ytWanted = null;      // the video the player should be showing
   el.volume = volume;
 
+  const onYouTube = () => Boolean(now && now.youtube);
   const shuffled = (list) => {
     const out = [...list];
     for (let k = out.length - 1; k > 0; k--) {
@@ -423,41 +448,108 @@ function makeChannel(el, tracks, volume, label) {
     if (out.length > 1 && out[0] === now) out.push(out.shift());
     return out;
   };
+
+  function drop(track) {
+    pool = pool.filter((t) => t !== track);
+    queue = queue.filter((t) => t !== track);
+  }
+  // No YouTube (offline, or the script was blocked): carry on with whatever files there are.
+  function dropYouTube() {
+    const wasOn = onYouTube();
+    pool.filter((t) => t.youtube).forEach(drop);
+    if (wasOn) load(channelWanted(channel));
+  }
+
+  function showVideo() {
+    if (!ytReady || !ytWanted) return;
+    const showing = yt.getVideoData && yt.getVideoData().video_id;
+    if (showing !== ytWanted) {
+      if (wantPlaying) yt.loadVideoById(ytWanted);
+      else yt.cueVideoById(ytWanted);
+    } else if (wantPlaying) {
+      yt.playVideo();
+    }
+  }
+  function useYouTube(id) {
+    ytWanted = id;
+    ytApi().then(() => {
+      if (yt) { showVideo(); return; }
+      yt = new YT.Player(`yt-${name}`, {
+        width: "100%",
+        height: "100%",
+        videoId: id,
+        playerVars: {playsinline: 1, rel: 0},
+        events: {
+          onReady: () => { ytReady = true; yt.setVolume(Math.round(volume * 100)); showVideo(); },
+          onStateChange: (e) => {
+            if (e.data !== YT.PlayerState.ENDED || !onYouTube()) return;
+            if (pool.length <= 1) { yt.seekTo(0); yt.playVideo(); } // a lone track just loops
+            else load(true);
+          },
+          // e.g. the owner does not allow this video to play on other websites
+          onError: () => { if (onYouTube()) { drop(now); load(channelWanted(channel)); } }
+        }
+      });
+    }).catch(dropYouTube);
+  }
+
   function play() {
-    if (!el.getAttribute("src")) return;
-    const started = el.play();
-    if (started && started.catch) started.catch(() => {}); // blocked until the first gesture
+    wantPlaying = true;
+    if (onYouTube()) {
+      if (ytReady) yt.playVideo();
+    } else if (el.getAttribute("src")) {
+      const started = el.play();
+      if (started && started.catch) started.catch(() => {}); // blocked until the first gesture
+    }
+  }
+  function pause() {
+    wantPlaying = false;
+    if (ytReady) yt.pauseVideo();
+    if (!el.paused) el.pause();
   }
   // Loads the next song in the round, or `pick` if a particular one was asked for.
   function load(andPlay, pick) {
     if (pick) queue = queue.filter((t) => t !== pick);
     else if (!queue.length) queue = shuffled(pool);
     now = pick || queue.shift() || standIn;
-    if (now) {
-      el.loop = pool.length <= 1;          // a lone track just loops
-      el.src = now.file;
-      if (andPlay) play();
-    } else {
+    wantPlaying = Boolean(andPlay);
+    if (onYouTube()) {
+      if (!el.paused) el.pause();
       el.removeAttribute("src");
+      useYouTube(now.youtube);
+    } else {
+      if (ytReady) yt.pauseVideo();
+      if (now) {
+        el.loop = pool.length <= 1;        // a lone track just loops
+        el.src = now.file;
+        if (andPlay) play();
+      } else {
+        el.removeAttribute("src");
+      }
     }
     paintMusicMenu();
   }
-  el.addEventListener("ended", () => load(true));
+  el.addEventListener("ended", () => { if (!onYouTube()) load(true); });
   el.addEventListener("error", () => {
+    if (onYouTube() || !now) return;
     // A file that will not play is dropped, and the round moves on.
     const bad = now;
-    pool = pool.filter((t) => t !== bad);
-    queue = queue.filter((t) => t !== bad);
+    drop(bad);
     if (bad === standIn) { now = null; el.removeAttribute("src"); paintMusicMenu(); return; }
     load(channelWanted(channel));
   });
 
   const channel = {
-    el,
     label,
     play,
-    pause: () => { if (!el.paused) el.pause(); },
-    restart: () => { try { el.currentTime = 0; } catch (err) { /* not loaded yet */ } },
+    pause,
+    paused: () => (onYouTube()
+      ? !ytReady || ![YT.PlayerState.PLAYING, YT.PlayerState.BUFFERING].includes(yt.getPlayerState())
+      : el.paused),
+    restart: () => {
+      if (onYouTube()) { if (ytReady) yt.seekTo(0); }
+      else { try { el.currentTime = 0; } catch (err) { /* not loaded yet */ } }
+    },
     tracks: () => (pool.length ? pool : standIn ? [standIn] : []),
     current: () => now,
     choose: (track) => load(true, track)
@@ -486,7 +578,7 @@ function syncMusic() {
   }
   Object.entries(channels).forEach(([name, channel]) => {
     if (name !== want) channel.pause();
-    else if (channel.el.paused) channel.play();
+    else if (channel.paused()) channel.play();
   });
   paintMusicMenu();
 }
@@ -495,7 +587,8 @@ let musicMenuHtml = "";
 function paintMusicMenu() {
   jingleBtn.setAttribute("aria-pressed", String(musicWanted));
   if (!channels) return;
-  const channel = channels[slideChannel()];
+  const active = slideChannel();
+  const channel = channels[active];
   const now = channel.current();
   const html = `
     <div class="mm-head">${esc(channel.label)}</div>
@@ -510,6 +603,11 @@ function paintMusicMenu() {
     musicMenuHtml = html;
     musicMenu.innerHTML = html;
   }
+  // The YouTube player stays on screen whenever a YouTube track is the current one.
+  const onYouTube = Boolean(now && now.youtube);
+  ytDock.hidden = !onYouTube;
+  ytDock.querySelectorAll(".yt-frame").forEach((frame) =>
+    frame.classList.toggle("live", onYouTube && frame.dataset.channel === active));
 }
 
 function toggleMusicMenu(open = musicMenu.hidden) {
@@ -539,10 +637,20 @@ musicMenu.addEventListener("click", (e) => {
   }
 });
 
+// The dock can be parked in any corner, in case it covers something on a slide.
+const DOCK_CORNERS = ["br", "bl", "tl", "tr"];
+try { ytDock.dataset.corner = localStorage.getItem("fakemas-dock") || "br"; } catch (err) { ytDock.dataset.corner = "br"; }
+document.getElementById("yt-move").onclick = (e) => {
+  const next = DOCK_CORNERS[(DOCK_CORNERS.indexOf(ytDock.dataset.corner) + 1) % DOCK_CORNERS.length];
+  ytDock.dataset.corner = next;
+  try { localStorage.setItem("fakemas-dock", next); } catch (err) { /* private mode */ }
+  if (e.detail) e.currentTarget.blur();
+};
+
 Promise.all([present(music.playlist), present(music.slideshow)]).then(([background, slideshow]) => {
   channels = {
-    jingle: makeChannel(document.getElementById("jingle-audio"), background, 0.4, "Background playlist"),
-    trip: makeChannel(document.getElementById("trip-audio"), slideshow, 0.45, "Slideshow music")
+    jingle: makeChannel("jingle", document.getElementById("jingle-audio"), background, 0.4, "Background playlist"),
+    trip: makeChannel("trip", document.getElementById("trip-audio"), slideshow, 0.5, "Slideshow music")
   };
   syncMusic();
 });
@@ -576,7 +684,7 @@ document.addEventListener("keydown", (e) => {
   // A card that is already face-up no longer swallows Space, so it carries on revealing.
   if (isUnflipped(e.target) && (e.key === " " || e.key === "Enter")) return;
   // A focused timeline or scoreboard button gets pressed, rather than advancing the deck.
-  const onControl = e.target instanceof Element && e.target.closest("#timeline, #scores, #scores-btn, #music-menu");
+  const onControl = e.target instanceof Element && e.target.closest("#timeline, #scores, #scores-btn, #music-menu, #yt-dock");
   if (onControl && (e.key === " " || e.key === "Enter")) return;
   switch (e.key) {
     case "ArrowRight": case "PageDown": next(); break;
@@ -597,7 +705,7 @@ document.addEventListener("keydown", (e) => {
 
 let touchX = null;
 document.addEventListener("touchstart", (e) => {
-  const onPanel = e.target instanceof Element && e.target.closest("#scores, #timeline, #music-menu, .mt-tile");
+  const onPanel = e.target instanceof Element && e.target.closest("#scores, #timeline, #music-menu, #yt-dock, .mt-tile");
   touchX = onPanel ? null : e.touches[0].clientX;
 }, {passive: true});
 document.addEventListener("touchend", (e) => {

@@ -609,6 +609,30 @@ body{
 /* a question photo shares the card with options, so it is a little shorter */
 .q-photo.with-opts .media img{max-height:clamp(110px,23vh,210px)}
 
+/* ============ youtube player dock ============ */
+/* YouTube tracks play through YouTube's own player, which has to stay visible while it
+   plays. It sits in a corner above the controls; the arrow button moves it to another. */
+#yt-dock{position:fixed;z-index:9;width:240px;height:200px;padding:3px;border-radius:12px;
+  background:#000;border:2px solid var(--gold-d);box-shadow:0 10px 30px rgba(0,0,0,.7)}
+#yt-dock[hidden]{display:none}
+#yt-dock[data-corner="br"]{right:22px;bottom:102px}
+#yt-dock[data-corner="bl"]{left:22px;bottom:102px}
+#yt-dock[data-corner="tl"]{left:22px;top:22px}
+#yt-dock[data-corner="tr"]{right:22px;top:22px}
+.yt-frame{display:none;width:100%;height:100%;border-radius:8px;overflow:hidden}
+.yt-frame.live{display:block}
+.yt-frame iframe{display:block;width:100%;height:100%;border:0}
+#yt-move{position:absolute;top:-12px;left:-12px;z-index:1;width:28px;height:28px;padding:0;border-radius:50%;cursor:pointer;
+  font-size:.95rem;line-height:1;color:var(--gold-l);border:2px solid var(--gold-d);
+  background:linear-gradient(180deg,#8c0f17,#4e060b)}
+#yt-move:focus-visible{outline:2px solid var(--gold-l);outline-offset:2px}
+@media(max-width:640px){
+  #yt-dock{width:200px}
+  #yt-dock[data-corner="br"],#yt-dock[data-corner="bl"]{bottom:114px}
+  #yt-dock[data-corner="br"],#yt-dock[data-corner="tr"]{right:18px}
+  #yt-dock[data-corner="bl"],#yt-dock[data-corner="tl"]{left:18px}
+}
+
 /* ============ music menu ============ */
 #music-menu{position:fixed;left:50%;bottom:94px;transform:translateX(-50%);z-index:21;
   width:min(380px,calc(100% - 28px));padding:12px 14px 14px;border-radius:16px;border:2px solid var(--gold);
