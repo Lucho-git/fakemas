@@ -13,23 +13,28 @@ const players = ["Tom", "Vic", "Jev", "Ella", "Mum", "Dad"];
    order and none repeats until every one has had a turn. `slideshow` plays instead
    during the Philippines photos and pop quiz. `title` is what the ♪ menu shows.
 
-   A track is one of:
-     { title, youtube: "VIDEO_ID" }  streamed from YouTube through its own player, which
-                                     sits in a small dock on screen. The ID is the part
-                                     after "watch?v=" in the video's address. Needs internet.
-     { title, file: "assets/audio/…mp3" }  an audio file in this project.
-   The generated stand-in at the bottom of each list only plays when nothing above it
-   can (no internet, or a video that will not play on other websites).                 */
+   A track can say where it is on Spotify, on YouTube, or both:
+     spotify: "TRACK_ID"   streamed through Spotify's own player. The ID is the part after
+                           "/track/" in the song's share link. Plays whole songs only in a
+                           browser that is signed in to Spotify; otherwise 30-second samples.
+     youtube: "VIDEO_ID"   streamed through YouTube's own player. The ID is the part after
+                           "watch?v=" in the video's address.
+     file: "assets/audio/…mp3"   an audio file in this project.
+   `source` is which service to use for songs that are on both ("spotify" or "youtube");
+   the ♪ menu can switch, and remembers the choice on that browser. The player sits in a
+   small dock on screen. The generated stand-in at the bottom of each list only plays
+   when nothing above it can (no internet).                                             */
 const music = {
+  source: "spotify",
   playlist: [
-    {title: "A Nonsense Christmas — Sabrina Carpenter",   youtube: "s_eCNuHS6kk"},
-    {title: "Mistletoe — Justin Bieber",                  youtube: "LUjn3RpkcKY"},
-    {title: "Merry Christmas, Happy Holidays — *NSYNC",   youtube: "wKj92352UAE"},
-    {title: "take me home (4 christmas) — Olivia Rodrigo", youtube: "uXymCnWk9LI"},
+    {title: "A Nonsense Christmas — Sabrina Carpenter",   spotify: "73ye7F9Ub51dQ3CrnCHFhr", youtube: "s_eCNuHS6kk"},
+    {title: "Mistletoe — Justin Bieber",                  spotify: "7xapw9Oy21WpfEcib2ErSA", youtube: "LUjn3RpkcKY"},
+    {title: "Merry Christmas, Happy Holidays — *NSYNC",   spotify: "4v9WbaxW8HdjqfUiWYWsII", youtube: "wKj92352UAE"},
+    {title: "take me home (4 christmas) — Olivia Rodrigo", spotify: "4UjYZS6Jbt3lee27qmiNOu", youtube: "uXymCnWk9LI"},
     {title: "Jingle Bells (synth stand-in)",              file: "assets/audio/jingle.mp3"}
   ],
   slideshow: [
-    {title: "Bebot — The Black Eyed Peas",                youtube: "wESgcExetso"},
+    {title: "Bebot — The Black Eyed Peas",                spotify: "4nZwaKTdxczLpUHfLVAozA", youtube: "wESgcExetso"},
     {title: "Slideshow loop (synth stand-in)",            file: "assets/audio/trip.mp3"}
   ]
 };
@@ -244,14 +249,17 @@ const codeWords = [
   }
 ];
 
-/* Part 7 — naughty or nice cards. v: "naughty" | "nice" */
+/* Part 7 — naughty or nice cards. v: "naughty" | "nice"
+   `why` is the reason, which appears on the card when it is stamped, and `tag` is the
+   small print in brackets under it. Leave both off for a card with no reason. */
+const NICE_WHY = {why:"Getting out and travelling the world", tag:"and sorting out our Margaret River accommodation"};
 const people = [
-  {n:"Tom", v:"naughty", i:"👤"},
-  {n:"Vic", v:"naughty", i:"👤"},
-  {n:"Jev", v:"naughty", i:"👤"},
-  {n:"Ella", v:"naughty", i:"👤"},
-  {n:"Mum", v:"nice", i:"👤"},
-  {n:"Dad", v:"nice", i:"👤"},
+  {n:"Tom", v:"naughty", i:"👤", why:"Looting the family home after our waterbomb party", tag:"drunken thief"},
+  {n:"Vic", v:"naughty", i:"👤", why:"Being too strict on a pub crawl", tag:"teacher energy"},
+  {n:"Jev", v:"naughty", i:"👤", why:"Being a morning person", tag:"wake-up time: 3 am"},
+  {n:"Ella", v:"naughty", i:"👤", why:"Sleeping on long car rides", tag:"passenger princess"},
+  {n:"Mum", v:"nice", i:"👤", ...NICE_WHY},
+  {n:"Dad", v:"nice", i:"👤", ...NICE_WHY},
   {n:"Jack", d:"(Dog)", v:"nice", i:"🐕"},
   {n:"Thumper", d:"(Dog)", v:"nice", i:"🐾"}
 ];

@@ -55,7 +55,8 @@ Everything you normally want to change is in [content.js](assets/js/content.js):
   (see below).
 - `birds` — the surprise bird round after the movies (see below).
 - `codeWords` — Part 6, the "Santa's Code Words" clue game (see below).
-- `people` — Part 7 cards. `v` is `"naughty"` or `"nice"`.
+- `people` — Part 7 cards. `v` is `"naughty"` or `"nice"`; `why` is the reason
+  that appears when the card is stamped, with `tag` in brackets under it.
 - `trip` — the bonus section after the riddles: "who is Santa?", then the
   Philippines slideshow (see below).
 
@@ -266,10 +267,13 @@ Music is set in `music` at the top of [content.js](assets/js/content.js):
 
 ```js
 const music = {
-  playlist:  [{ title: "A Nonsense Christmas — Sabrina Carpenter", youtube: "s_eCNuHS6kk" },
+  source: "spotify",
+  playlist:  [{ title: "A Nonsense Christmas — Sabrina Carpenter",
+                spotify: "73ye7F9Ub51dQ3CrnCHFhr", youtube: "s_eCNuHS6kk" },
               ...
               { title: "Jingle Bells (synth stand-in)", file: "assets/audio/jingle.mp3" }],
-  slideshow: [{ title: "Bebot — The Black Eyed Peas", youtube: "wESgcExetso" },
+  slideshow: [{ title: "Bebot — The Black Eyed Peas",
+                spotify: "4nZwaKTdxczLpUHfLVAozA", youtube: "wESgcExetso" },
               { title: "Slideshow loop (synth stand-in)", file: "assets/audio/trip.mp3" }]
 };
 ```
@@ -279,17 +283,34 @@ const music = {
 - **`slideshow`** takes over on the "brought to you by" slide, plays through
   the photos and the pop quiz, and hands back when the movie round starts.
 
-**YouTube tracks.** `youtube: "VIDEO_ID"` streams the song from YouTube through
-YouTube's own embedded player; nothing is downloaded or stored in this project.
-The ID is the part after `watch?v=` in the video's address. Things to know:
+Every song is listed on both Spotify and YouTube. `source` says which one to
+use; the ♪ menu has a **Play from** switch between them, and the choice is
+remembered on that browser. Either way the song is streamed through that
+service's own embedded player and nothing is downloaded or stored in this
+project. Both need an internet connection, and the player sits in a small dock
+in a corner: the ⤢ button moves it to another corner if it is covering
+something.
 
-- It needs an internet connection.
-- The player has to stay on screen while it plays, so it sits in a small dock
-  in a corner. The ⤢ button on the dock moves it to another corner if it is
-  covering something; the choice is remembered.
-- YouTube decides what plays: it may show an advert first, and a video's owner
-  can switch off playing on other websites. A track that will not play is
-  skipped.
+**Spotify.** `spotify: "TRACK_ID"` is the part after `/track/` in a song's share
+link (Share → Copy song link). Things to know:
+
+- **Sign in first.** Spotify plays whole songs only in a browser that is signed
+  in to Spotify: open <https://open.spotify.com>, sign in, then load the deck in
+  the same browser. Signed out, it plays a 30-second sample of each song, and
+  the ♪ menu says so.
+- Use an ordinary Chrome or Edge window. A private window, or a browser that
+  blocks third-party cookies (Safari, Brave, Firefox on strict), hides the
+  sign-in from the player, so it falls back to samples.
+- If nothing starts after your first click on the deck, press play on the
+  Spotify bar once.
+- Spotify's player has no volume control, so the music does not dip under the
+  sound effects as it does on YouTube.
+
+**YouTube.** `youtube: "VIDEO_ID"` is the part after `watch?v=` in the video's
+address. YouTube shows the video in the dock, may play an advert first, and a
+video's owner can switch off playing on other websites; a track that will not
+play is skipped. If Spotify cannot be reached at all, the deck uses YouTube by
+itself.
 
 **Audio files.** `file: "assets/audio/…mp3"` plays a file from this project.
 `jingle.mp3` (30 seconds of *Jingle Bells*) and `trip.mp3` (a 37-second
@@ -303,7 +324,7 @@ presenter interacts.
 
 **The ♪ menu.** Clicking ♪ opens a small menu: which list is playing
 (background or slideshow), the song that is on now, a button for every song
-(click one to switch to it), and a mute switch. `M` mutes and unmutes without
+(click one to switch to it), the Spotify / YouTube switch, and a mute switch. `M` mutes and unmutes without
 opening it; `Esc` closes it. `title` is the name each song is shown under.
 
 Volumes are the number near the end of the two `makeChannel(...)` lines in

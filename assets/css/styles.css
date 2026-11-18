@@ -945,6 +945,40 @@ body{
 @keyframes winner-in{0%{transform:scale(.2) rotate(-8deg);opacity:0}70%{transform:scale(1.08) rotate(2deg);opacity:1}100%{transform:none;opacity:1}}
 @media(prefers-reduced-motion:reduce){.rv.on .winner-crown,.rv.on .winner-name,.rv.on .winner-line{animation:none}}
 
+/* ============ spotify in the player dock ============ */
+/* Spotify's player is a slim bar rather than a video, so the dock shrinks to fit it. */
+#yt-dock[data-kind="spotify"]{width:min(330px,calc(100vw - 44px));height:90px}
+#yt-dock[data-kind="spotify"] .yt-frame{border-radius:12px}
+/* the Spotify / YouTube switch in the music menu */
+.mm-source{display:flex;align-items:center;gap:6px;margin-top:10px}
+.mm-source span{flex:none;margin-right:4px;font-family:'Playfair Display',serif;font-style:italic;font-size:.85rem;color:var(--parch)}
+.mm-src{flex:1 1 0;cursor:pointer;padding:.45em .6em;border-radius:10px;text-align:center;
+  font-family:'Cinzel',serif;font-weight:700;font-size:.74rem;letter-spacing:.08em;color:var(--parch);
+  border:1px solid rgba(184,137,46,.55);background:rgba(0,0,0,.35);transition:background .2s,color .2s}
+.mm-src.now{color:var(--red-d);border-color:var(--gold-l);background:linear-gradient(180deg,#fbeab7,#e8c677)}
+.mm-src:hover{box-shadow:0 0 12px rgba(233,196,106,.4)}
+.mm-src:disabled{opacity:.4;cursor:default;box-shadow:none}
+.mm-note{margin-top:8px;padding:.5em .7em;border-radius:8px;font-family:'Playfair Display',serif;font-size:.8rem;line-height:1.35;
+  color:#fbeab7;background:rgba(140,15,23,.55);border:1px solid rgba(233,196,106,.45)}
+
+/* ============ naughty or nice: the reason on each card ============ */
+/* The stamp lands across the silhouette, and the reason fades in underneath the name. */
+.nn .stamp{bottom:auto;top:clamp(16px,3.4vw,34px);background:rgba(255,248,225,.82)}
+.nn .why{min-height:3.9em;margin-top:6px;padding:0 2px;font-family:'Playfair Display',serif;font-weight:700;line-height:1.25;
+  font-size:clamp(.78rem,1.3vw,1rem);color:#3a140c;opacity:0;transform:translateY(6px);
+  transition:opacity .4s .25s,transform .4s .25s}
+.nn .why small{display:block;margin-top:2px;font-style:italic;font-weight:500;color:var(--red-d)}
+.nn.nice-c .why small{color:#1f7a3f}
+.nn.on .why{opacity:1;transform:none}
+@media(max-height:740px){
+  .nn .stamp{top:14px}
+  .nn .why{font-size:.78rem;margin-top:2px;min-height:3.7em;line-height:1.2}
+}
+@media(max-width:640px){
+  .nn .stamp{top:10px}
+  .nn .why{font-size:.68rem}
+}
+
 /* jingle toggle */
 #bar #jingle,#bar #reset{min-width:2.9em;padding:.5em .65em;font-size:1rem}
 /* five controls have to share a phone-width bar */

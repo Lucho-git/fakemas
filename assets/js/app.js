@@ -402,9 +402,10 @@ deck.addEventListener("click", (e) => {
 
 /* ============ MUSIC ============ */
 // Two channels (see `music` in content.js): the background playlist, and the slideshow
-// music that takes over on slides marked data-music="trip". A track is either a YouTube
-// video, streamed through YouTube's own embedded player (shown in a small dock), or an
-// audio file. The ♪ button opens a menu of what is playing, with a button per song.
+// music that takes over on slides marked data-music="trip". A track can be played three
+// ways: through Spotify's embedded player, through YouTube's, or from an audio file.
+// The two players sit in a small dock. The ♪ button opens a menu of what is playing,
+// with a button per song and a switch between Spotify and YouTube.
 const jingleBtn = document.getElementById("jingle");
 const musicMenu = document.getElementById("music-menu");
 const ytDock = document.getElementById("yt-dock");
@@ -413,18 +414,38 @@ const asTrack = (t) => (typeof t === "string"
   ? {file: t, title: t.split("/").pop().replace(/\.\w+$/, "").replace(/-/g, " ")}
   : t);
 
+// Which service plays the songs: `music.source` to begin with, then whatever was last
+// picked in the ♪ menu on this browser.
+const SOURCE_KEY = "fakemas-music-source";
+const SOURCES = {spotify: "Spotify", youtube: "YouTube"};
+let musicSource = music.source in SOURCES ? music.source : "youtube";
+try {
+  const saved = localStorage.getItem(SOURCE_KEY);
+  if (saved && saved in SOURCES) musicSource = saved;
+} catch (err) { /* private mode: use the default */ }
+// A service whose player script would not load (offline, or blocked) is not tried again.
+const serviceDown = {spotify: false, youtube: false};
+
+// How a track will be played right now: the chosen service if the song is on it,
+// otherwise the other service, otherwise its audio file.
+function kindOf(t) {
+  if (!t) return null;
+  const order = musicSource === "spotify" ? ["spotify", "youtube"] : ["youtube", "spotify"];
+  return order.find((service) => t[service] && !serviceDown[service]) || (t.file ? "file" : null);
+}
+
 // Which audio files are really there? (Only a web server can be asked; opened straight
-// from disk we find out when a song fails to play.) YouTube tracks are taken on trust.
+// from disk we find out when a song fails to play.) Streamed tracks are taken on trust.
 async function present(list) {
   const tracks = list.map(asTrack);
   if (!/^https?:$/.test(location.protocol)) return tracks;
   const found = await Promise.all(tracks.map((t) =>
-    (t.youtube ? true : fetch(t.file, {method: "HEAD"}).then((r) => r.ok, () => false))));
+    (t.spotify || t.youtube ? true : fetch(t.file, {method: "HEAD"}).then((r) => r.ok, () => false))));
   return tracks.filter((_, k) => found[k]);
 }
 
-// YouTube's player script, fetched once and only if a track needs it. Rejects when it
-// cannot be reached (no internet), and the channels then fall back to their audio files.
+// Each service's player script, fetched once and only if a track needs it. Each rejects
+// when it cannot be reached, and the channels then fall back to the next way of playing.
 let ytApiPromise = null;
 function ytApi() {
   if (!ytApiPromise) {
@@ -440,23 +461,60 @@ function ytApi() {
   }
   return ytApiPromise;
 }
+let spotifyApiPromise = null;
+function spotifyApi() {
+  if (!spotifyApiPromise) {
+    spotifyApiPromise = new Promise((resolve, reject) => {
+      const giveUp = setTimeout(() => reject(new Error("Spotify did not load")), 10000);
+      window.onSpotifyIframeApiReady = (api) => { clearTimeout(giveUp); resolve(api); };
+      const script = document.createElement("script");
+      script.src = "https://open.spotify.com/embed/iframe-api/v1";
+      script.async = true;
+      script.onerror = () => { clearTimeout(giveUp); reject(new Error("Spotify is unreachable")); };
+      document.head.append(script);
+    });
+  }
+  return spotifyApiPromise;
+}
+function serviceFailed(service) {
+  if (serviceDown[service]) return;
+  serviceDown[service] = true;
+  refreshChannels();
+}
 
 // A channel plays its tracks one at a time: shuffled, each once per round.
 // The generated stand-in only plays when there is nothing else.
 function makeChannel(name, el, tracks, volume, label) {
-  let pool = tracks.filter((t) => !(t.file && STAND_IN.test(t.file)));
+  const songs = tracks.filter((t) => !(t.file && STAND_IN.test(t.file)));
   const standIn = tracks.find((t) => t.file && STAND_IN.test(t.file)) || null;
+  const dead = new Set();   // songs that turned out not to play
   let queue = [];
   let now = null;
+  let nowKind = null;       // how `now` is being played: "spotify", "youtube", "file" or null
   let wantPlaying = false;
-  let yt = null;            // this channel's YouTube player, made when first needed
-  let ytReady = false;
-  let ytWanted = null;      // the video the player should be showing
   let ducked = false;       // turned down while a sound effect plays
   const level = () => volume * (ducked ? 0.3 : 1);
   el.volume = volume;
 
-  const onYouTube = () => Boolean(now && now.youtube);
+  // This channel's YouTube player, made when first needed.
+  let yt = null;
+  let ytReady = false;
+  let ytWanted = null;      // the video the player should be showing
+  // This channel's Spotify player, likewise. Spotify only reports what it is doing through
+  // "playback_update" messages, so the state below is our record of the latest one.
+  let sp = null;
+  let spMaking = false;
+  let spWanted = null;      // the track the player should have loaded ("spotify:track:…")
+  let spLoaded = null;
+  let spPaused = true;
+  let spAsked = false;      // we have asked it to play since it last paused
+  let spAskedAt = 0;
+  let spLastPos = 0;        // last position heard while playing, in ms
+  let spHeardAt = 0;        // when it last reported anything
+  let spDone = false;       // the loaded song has played to its end
+  let spSample = false;     // it is only playing a 30-second sample (not signed in)
+
+  const pool = () => songs.filter((t) => !dead.has(t) && kindOf(t));
   const shuffled = (list) => {
     const out = [...list];
     for (let k = out.length - 1; k > 0; k--) {
@@ -467,20 +525,16 @@ function makeChannel(name, el, tracks, volume, label) {
     if (out.length > 1 && out[0] === now) out.push(out.shift());
     return out;
   };
-
   function drop(track) {
-    pool = pool.filter((t) => t !== track);
+    dead.add(track);
     queue = queue.filter((t) => t !== track);
   }
-  // No YouTube (offline, or the script was blocked): carry on with whatever files there are.
-  function dropYouTube() {
-    const wasOn = onYouTube();
-    pool.filter((t) => t.youtube).forEach(drop);
-    if (wasOn) load(channelWanted(channel));
-  }
+  // The song finished: a lone track goes round again, otherwise the next one starts.
+  const loops = () => pool().length <= 1;
 
+  /* ---- YouTube ---- */
   function showVideo() {
-    if (!ytReady || !ytWanted) return;
+    if (!ytReady || !ytWanted || nowKind !== "youtube") return;
     const showing = yt.getVideoData && yt.getVideoData().video_id;
     if (showing !== ytWanted) {
       if (wantPlaying) yt.loadVideoById(ytWanted);
@@ -501,60 +555,140 @@ function makeChannel(name, el, tracks, volume, label) {
         events: {
           onReady: () => { ytReady = true; yt.setVolume(Math.round(level() * 100)); showVideo(); },
           onStateChange: (e) => {
-            if (e.data !== YT.PlayerState.ENDED || !onYouTube()) return;
-            if (pool.length <= 1) { yt.seekTo(0); yt.playVideo(); } // a lone track just loops
+            if (e.data !== YT.PlayerState.ENDED || nowKind !== "youtube") return;
+            if (loops()) { yt.seekTo(0); yt.playVideo(); }
             else load(true);
           },
           // e.g. the owner does not allow this video to play on other websites
-          onError: () => { if (onYouTube()) { drop(now); load(channelWanted(channel)); } }
+          onError: () => { if (nowKind === "youtube") { drop(now); load(channelWanted(channel)); } }
         }
       });
-    }).catch(dropYouTube);
+    }).catch(() => serviceFailed("youtube"));
+  }
+
+  /* ---- Spotify ---- */
+  // A playing song reports about once a second, so a long silence means it has stopped.
+  const spStopped = () => spPaused || performance.now() - spHeardAt > 5000;
+  function askSpotifyToPlay() {
+    // resume() starts a freshly loaded track and carries on a paused one. Asking again
+    // while it is still starting up would only stutter, so allow one ask per 1.5 seconds.
+    if (performance.now() - spAskedAt < 1500) return;
+    spAskedAt = performance.now();
+    spAsked = true;
+    sp.resume();
+  }
+  function showSpotify() {
+    if (!sp || !spWanted || nowKind !== "spotify") return;
+    if (spLoaded !== spWanted) {
+      spLoaded = spWanted;
+      spPaused = true;
+      spAsked = false;
+      spAskedAt = 0;
+      spLastPos = 0;
+      spDone = false;
+      sp.loadUri(spWanted);
+    }
+    if (wantPlaying && spStopped()) askSpotifyToPlay();
+  }
+  function onSpotifyUpdate(e) {
+    const d = e.data || {};
+    const wasSample = spSample;
+    if (d.duration > 0) spSample = d.duration < 40000;
+    spHeardAt = performance.now();
+    // Spotify sends no "finished" message. A song is over when its position reaches its
+    // length (it then goes quiet), or when it stops within its last moments.
+    let ended = false;
+    if (!d.isPaused) {
+      spPaused = false;
+      spLastPos = d.position || 0;
+      ended = d.duration > 0 && spLastPos >= d.duration - 400;
+      // It came to life after this channel stopped being wanted: quieten it again.
+      if (!wantPlaying || nowKind !== "spotify") sp.pause();
+    } else {
+      ended = !spPaused && d.duration > 0 && spLastPos >= d.duration - 2500;
+      spPaused = true;
+      spAsked = false;
+    }
+    if (ended && !spDone) {
+      spDone = true;          // the last position is reported more than once
+      spPaused = true;
+      if (nowKind === "spotify" && wantPlaying) {
+        spAskedAt = 0;
+        if (loops()) { spDone = false; spLastPos = 0; sp.seek(0); askSpotifyToPlay(); }
+        else load(true);
+      }
+    }
+    if (wasSample !== spSample) paintMusicMenu();
+  }
+  function useSpotify(id) {
+    spWanted = `spotify:track:${id}`;
+    spotifyApi().then((api) => {
+      if (sp) { showSpotify(); return; }
+      if (spMaking) return;
+      spMaking = true;
+      const first = spWanted;
+      api.createController(document.getElementById(`sp-${name}`), {uri: first, width: "100%", height: 80}, (controller) => {
+        sp = controller;
+        spLoaded = first;
+        sp.addListener("playback_update", onSpotifyUpdate);
+        sp.addListener("ready", showSpotify);
+        showSpotify();
+      });
+    }).catch(() => serviceFailed("spotify"));
   }
 
   function play() {
     wantPlaying = true;
-    if (onYouTube()) {
+    if (nowKind === "spotify") {
+      showSpotify();
+    } else if (nowKind === "youtube") {
       if (ytReady) yt.playVideo();
     } else if (el.getAttribute("src")) {
       const started = el.play();
       if (started && started.catch) started.catch(() => {}); // blocked until the first gesture
     }
   }
+  function quieten(except) {
+    if (except !== "youtube" && ytReady) yt.pauseVideo();
+    if (except !== "spotify" && sp && (spAsked || !spPaused)) { spAsked = false; sp.pause(); }
+    if (except !== "file" && !el.paused) el.pause();
+  }
   function pause() {
     wantPlaying = false;
-    if (ytReady) yt.pauseVideo();
-    if (!el.paused) el.pause();
+    quieten(null);
   }
-  // Loads the next song in the round, or `pick` if a particular one was asked for.
-  function load(andPlay, pick) {
-    if (pick) queue = queue.filter((t) => t !== pick);
-    else if (!queue.length) queue = shuffled(pool);
-    now = pick || queue.shift() || standIn;
+  // Starts `now` on whichever player it currently belongs to.
+  function start(andPlay) {
     wantPlaying = Boolean(andPlay);
-    if (onYouTube()) {
-      if (!el.paused) el.pause();
-      el.removeAttribute("src");
+    nowKind = kindOf(now);
+    quieten(nowKind);
+    if (nowKind !== "file") el.removeAttribute("src");
+    if (nowKind === "spotify") {
+      useSpotify(now.spotify);
+    } else if (nowKind === "youtube") {
       useYouTube(now.youtube);
-    } else {
-      if (ytReady) yt.pauseVideo();
-      if (now) {
-        el.loop = pool.length <= 1;        // a lone track just loops
-        el.src = now.file;
-        if (andPlay) play();
-      } else {
-        el.removeAttribute("src");
-      }
+    } else if (nowKind === "file") {
+      el.loop = loops();
+      el.src = now.file;
+      if (andPlay) play();
     }
     paintMusicMenu();
   }
-  el.addEventListener("ended", () => { if (!onYouTube()) load(true); });
+  // Loads the next song in the round, or `pick` if a particular one was asked for.
+  function load(andPlay, pick) {
+    const playable = pool();
+    queue = queue.filter((t) => t !== pick && playable.includes(t));
+    if (!pick && !queue.length) queue = shuffled(playable);
+    now = pick || queue.shift() || standIn;
+    start(andPlay);
+  }
+  el.addEventListener("ended", () => { if (nowKind === "file") load(true); });
   el.addEventListener("error", () => {
-    if (onYouTube() || !now) return;
+    if (nowKind !== "file" || !now) return;
     // A file that will not play is dropped, and the round moves on.
     const bad = now;
     drop(bad);
-    if (bad === standIn) { now = null; el.removeAttribute("src"); paintMusicMenu(); return; }
+    if (bad === standIn) { now = null; nowKind = null; el.removeAttribute("src"); paintMusicMenu(); return; }
     load(channelWanted(channel));
   });
 
@@ -562,20 +696,29 @@ function makeChannel(name, el, tracks, volume, label) {
     label,
     play,
     pause,
-    paused: () => (onYouTube()
-      ? !ytReady || ![YT.PlayerState.PLAYING, YT.PlayerState.BUFFERING].includes(yt.getPlayerState())
+    paused: () => (nowKind === "spotify" ? spStopped()
+      : nowKind === "youtube" ? !ytReady || ![YT.PlayerState.PLAYING, YT.PlayerState.BUFFERING].includes(yt.getPlayerState())
       : el.paused),
     restart: () => {
-      if (onYouTube()) { if (ytReady) yt.seekTo(0); }
+      if (nowKind === "spotify") { if (sp) { spLastPos = 0; spDone = false; sp.seek(0); } }
+      else if (nowKind === "youtube") { if (ytReady) yt.seekTo(0); }
       else { try { el.currentTime = 0; } catch (err) { /* not loaded yet */ } }
     },
-    tracks: () => (pool.length ? pool : standIn ? [standIn] : []),
+    tracks: () => { const playable = pool(); return playable.length ? playable : standIn ? [standIn] : []; },
     current: () => now,
+    kind: () => nowKind,
+    sampling: () => nowKind === "spotify" && spSample,
     choose: (track) => load(true, track),
+    // Spotify's player has no volume control, so only YouTube and files can be turned down.
     duck: (on) => {
       ducked = on;
       el.volume = level();
       if (ytReady) yt.setVolume(Math.round(level() * 100));
+    },
+    // The service changed (picked in the menu, or one failed): move the current song across.
+    refresh: () => {
+      if (now && !kindOf(now)) load(wantPlaying);
+      else if (kindOf(now) !== nowKind) start(wantPlaying);
     }
   };
   load(false);
@@ -590,6 +733,11 @@ const slideChannel = () => (channels && channels[els[cur].dataset.music] ? els[c
 const wantedName = () => (musicWanted ? slideChannel() : null);
 function channelWanted(channel) {
   return Boolean(channels) && channels[wantedName()] === channel;
+}
+function refreshChannels() {
+  if (!channels) return;
+  Object.values(channels).forEach((channel) => channel.refresh());
+  syncMusic();
 }
 
 function syncMusic() {
@@ -614,12 +762,20 @@ function paintMusicMenu() {
   const active = slideChannel();
   const channel = channels[active];
   const now = channel.current();
+  const kind = channel.kind();
+  const from = kind in SOURCES ? kind : musicSource;   // the service really in use, if one is
   const html = `
     <div class="mm-head">${esc(channel.label)}</div>
     <div class="mm-now">${musicWanted && now ? "Now playing" : "Muted"}${now ? `: <b>${esc(now.title)}</b>` : ""}</div>
     <div class="mm-list">${channel.tracks().map((t, k) =>
       `<button type="button" class="mm-track${t === now ? " now" : ""}" data-track="${k}"` +
       `${t === now ? ' aria-current="true"' : ""}>${esc(t.title)}</button>`).join("")}</div>
+    <div class="mm-source" role="group" aria-label="Play the songs from">
+      <span>Play from</span>${Object.entries(SOURCES).map(([key, text]) =>
+        `<button type="button" class="mm-src${key === from ? " now" : ""}" data-source="${key}"` +
+        `${key === from ? ' aria-pressed="true"' : ' aria-pressed="false"'}${serviceDown[key] ? " disabled" : ""}>${text}</button>`).join("")}
+    </div>
+    ${channel.sampling() ? `<div class="mm-note">Spotify is only playing 30-second samples here. Sign in at open.spotify.com in this browser and reload, or switch to YouTube.</div>` : ""}
     <button type="button" class="mm-mute" data-mute>${musicWanted ? "Mute music" : "Unmute music"}</button>`;
   // Only touch the page when something changed: this runs on every click and key press, and
   // rebuilding the buttons mid-click would swallow the click.
@@ -627,11 +783,12 @@ function paintMusicMenu() {
     musicMenuHtml = html;
     musicMenu.innerHTML = html;
   }
-  // The YouTube player stays on screen whenever a YouTube track is the current one.
-  const onYouTube = Boolean(now && now.youtube);
-  ytDock.hidden = !onYouTube;
+  // A streaming service's player stays on screen whenever it is the one playing.
+  const docked = kind in SOURCES;
+  ytDock.hidden = !docked;
+  ytDock.dataset.kind = docked ? kind : "";
   ytDock.querySelectorAll(".yt-frame").forEach((frame) =>
-    frame.classList.toggle("live", onYouTube && frame.dataset.channel === active));
+    frame.classList.toggle("live", docked && frame.dataset.channel === active && frame.dataset.kind === kind));
 }
 
 function toggleMusicMenu(open = musicMenu.hidden) {
@@ -653,6 +810,10 @@ musicMenu.addEventListener("click", (e) => {
   if (!btn || !channels) return;
   if ("mute" in btn.dataset) {
     toggleMute();
+  } else if (btn.dataset.source) {
+    musicSource = btn.dataset.source;
+    try { localStorage.setItem(SOURCE_KEY, musicSource); } catch (err) { /* private mode */ }
+    refreshChannels();
   } else if (btn.dataset.track) {
     // Picking a song also un-mutes.
     const channel = channels[slideChannel()];
