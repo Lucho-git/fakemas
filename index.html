@@ -1,45 +1,84 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Ross Family Christmas Quiz</title>
-<meta name="description" content="A festive family trivia, riddles and games presentation for Fakemas.">
-<meta name="theme-color" content="#1c0306">
+<title>Luchodore</title>
+<meta name="description" content="Luchodore events.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎄</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Playfair+Display:ital,wght@0,500;0,700;1,500;1,700&family=Great+Vibes&family=Cormorant+Garamond:wght@500;600;700&family=Oswald:wght@700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/styles.css">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Playfair+Display:ital,wght@1,500&display=swap" rel="stylesheet">
+<style>
+  :root{--gold:#e9c46a;--gold-d:#b8892e;--night:#0c0204}
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%}
+  body{display:flex;flex-direction:column;align-items:center;min-height:100vh;min-height:100dvh;
+    padding:clamp(18px,3.5vh,40px) 16px clamp(22px,4vh,48px);color:var(--gold);
+    font-family:'Cinzel',Georgia,serif;
+    background:radial-gradient(ellipse 120% 70% at 50% 0%,#5a0d16 0%,#2a070c 45%,var(--night) 100%) fixed var(--night)}
+
+  /* slow snowfall, drawn as two drifting layers of dots */
+  body::before,body::after{content:"";position:fixed;inset:-100vh 0 0;pointer-events:none;opacity:.5;
+    background-image:
+      radial-gradient(circle at 12% 18%,#fff 0 1.5px,transparent 2px),radial-gradient(circle at 67% 9%,#fff 0 1px,transparent 1.5px),
+      radial-gradient(circle at 41% 52%,#fff 0 1.8px,transparent 2.3px),radial-gradient(circle at 88% 63%,#fff 0 1.2px,transparent 1.7px),
+      radial-gradient(circle at 23% 81%,#fff 0 1px,transparent 1.5px),radial-gradient(circle at 58% 93%,#fff 0 1.5px,transparent 2px);
+    background-size:420px 420px;animation:snow 30s linear infinite}
+  body::after{opacity:.3;background-size:290px 290px;background-position:140px 60px;animation-duration:47s}
+  /* each layer falls by a whole number of its tiles, so the loop has no visible jump */
+  @keyframes snow{to{transform:translateY(840px)}}
+  body::after{animation-name:snow-far}
+  @keyframes snow-far{to{transform:translateY(870px)}}
+
+  .mark{position:relative;z-index:1;margin:0;font-weight:700;font-size:clamp(.95rem,2.2vw,1.35rem);
+    letter-spacing:.5em;text-indent:.5em;text-transform:uppercase;text-shadow:0 0 18px rgba(233,196,106,.35)}
+  .rule{position:relative;z-index:1;width:min(260px,60vw);height:1px;margin:clamp(10px,1.6vh,16px) 0 clamp(16px,3vh,32px);
+    background:linear-gradient(90deg,transparent,var(--gold-d),transparent)}
+
+  /* One <a class="event"> per event. They sit in a row and wrap when there are several. */
+  .events{position:relative;z-index:1;flex:1;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;
+    gap:clamp(20px,4vw,56px);width:100%}
+  .event{position:relative;display:flex;flex-direction:column;align-items:center;gap:clamp(12px,2vh,20px);
+    color:inherit;text-decoration:none;outline:none}
+  .cover{position:relative;display:block;border-radius:16px;overflow:hidden;line-height:0;
+    box-shadow:0 0 0 1px rgba(233,196,106,.45),0 24px 70px rgba(0,0,0,.7),0 0 60px rgba(190,30,45,.25);
+    transition:transform .35s cubic-bezier(.2,.9,.3,1.2),box-shadow .35s}
+  .cover img{display:block;width:auto;height:auto;max-width:min(92vw,720px);max-height:calc(100vh - 230px);max-height:calc(100dvh - 230px);min-height:260px;object-fit:contain}
+  /* a sheen that sweeps across the cover on hover */
+  .cover::after{content:"";position:absolute;inset:0;transform:translateX(-120%) skewX(-18deg);
+    background:linear-gradient(90deg,transparent 30%,rgba(255,240,200,.28) 50%,transparent 70%)}
+  .event:hover .cover,.event:focus-visible .cover{transform:translateY(-6px) scale(1.012);
+    box-shadow:0 0 0 2px var(--gold),0 30px 80px rgba(0,0,0,.75),0 0 90px rgba(233,196,106,.35)}
+  .event:hover .cover::after,.event:focus-visible .cover::after{transform:translateX(120%) skewX(-18deg);transition:transform .9s ease}
+  .enter{padding:.7em 2.2em;border-radius:999px;font-weight:700;font-size:clamp(.8rem,1.6vw,1rem);letter-spacing:.22em;
+    text-indent:.22em;text-transform:uppercase;color:#3a0a0e;
+    background:linear-gradient(180deg,#fbeab7,#e8c677 55%,#c99a3c);border:1px solid #fff3cf;
+    box-shadow:0 6px 18px rgba(0,0,0,.5),0 0 22px rgba(233,196,106,.3);transition:transform .25s,box-shadow .25s}
+  .event:hover .enter,.event:focus-visible .enter{transform:scale(1.06);box-shadow:0 8px 22px rgba(0,0,0,.55),0 0 34px rgba(233,196,106,.6)}
+  /* with more than one event the covers share the row */
+  .events:has(.event + .event) .cover img{max-width:min(88vw,440px);max-height:62vh}
+
+  @media(prefers-reduced-motion:reduce){
+    body::before,body::after{animation:none}
+    .cover,.cover::after,.enter{transition:none}
+  }
+</style>
 </head>
 <body>
-<canvas id="snow"></canvas>
-<div id="prog"></div>
-<main id="deck"></main>
-<nav id="timeline" aria-label="Jump to a section"></nav>
-<nav id="bar" aria-label="Slide controls">
-  <button id="prev" aria-label="Previous slide">◀ Back</button>
-  <span id="count"></span>
-  <button id="next" aria-label="Next slide">Next ▶</button>
-  <button id="jingle" aria-label="Music" aria-haspopup="true" aria-expanded="false" aria-controls="music-menu" aria-pressed="true" title="Music (M mutes)">♪</button>
-  <button id="reset" aria-label="Reset this slide" title="Reset this slide (R) · Shift-click or Shift+R resets every slide">↺</button>
-</nav>
-<button id="scores-btn" aria-label="Scoreboard" aria-expanded="false" aria-controls="scores" title="Scoreboard (S)">🏆<span class="sb-lbl"> Scores</span></button>
-<aside id="scores" aria-label="Scoreboard" hidden></aside>
-<aside id="music-menu" aria-label="Music" hidden></aside>
-<aside id="yt-dock" aria-label="Now playing" data-corner="br" hidden>
-  <button id="yt-move" type="button" aria-label="Move the player to another corner" title="Move the player to another corner">⤢</button>
-  <div class="yt-frame" data-channel="jingle" data-kind="youtube"><div id="yt-jingle"></div></div>
-  <div class="yt-frame" data-channel="trip" data-kind="youtube"><div id="yt-trip"></div></div>
-  <div class="yt-frame" data-channel="jingle" data-kind="spotify"><div id="sp-jingle"></div></div>
-  <div class="yt-frame" data-channel="trip" data-kind="spotify"><div id="sp-trip"></div></div>
-</aside>
-<button id="fs" aria-label="Toggle fullscreen">⛶<span class="fs-lbl"> Fullscreen</span></button>
-<audio id="jingle-audio" preload="auto"></audio>
-<audio id="trip-audio" preload="auto"></audio>
+  <h1 class="mark">Luchodore</h1>
+  <div class="rule" aria-hidden="true"></div>
 
-<script src="assets/js/content.js" defer></script>
-<script src="assets/js/slides.js" defer></script>
-<script src="assets/js/app.js" defer></script>
+  <!-- To add an event: put its folder beside this file, its cover in home/, and copy
+       one <a class="event"> block below, pointing at the new folder and cover. -->
+  <main class="events">
+    <a class="event" href="fakemas-2026/">
+      <span class="cover">
+        <img src="home/fakemas-2026.webp" width="1199" height="1312"
+             alt="Fakemas event: Will Santa be naughty or nice?">
+      </span>
+      <span class="enter">Enter</span>
+    </a>
+  </main>
 </body>
 </html>

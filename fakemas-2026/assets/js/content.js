@@ -261,17 +261,24 @@ const codeWords = [
 ];
 
 /* Part 7 — naughty or nice cards. v: "naughty" | "nice"
+   They are dealt in this order, four to a row, so mix the verdicts up.
    `why` is the reason, which appears on the card when it is stamped, and `tag` is the
-   small print in brackets under it. Leave both off for a card with no reason. */
+   small print in brackets under it. Leave both off for a card with no reason.
+   `photo` (a square picture, centred on the face) spins into the silhouette when the
+   card is stamped; without one the silhouette stays. */
 const people = [
-  {n:"Tom", v:"naughty", i:"👤", why:"Looting the family home after our waterbomb party", tag:"drunken thief"},
-  {n:"Vic", v:"naughty", i:"👤", why:"Being too strict on a pub crawl", tag:"teacher energy"},
-  {n:"Jev", v:"naughty", i:"👤", why:"Being a morning person", tag:"wake-up time: 3 am"},
-  {n:"Ella", v:"naughty", i:"👤", why:"Sleeping on long car rides", tag:"passenger princess"},
-  {n:"Mum", v:"nice", i:"👤", why:"Getting her D***H*** boss fired"},
-  {n:"Dad", v:"nice", i:"👤", why:"Taking care of his lawn"},
-  {n:"Jack", d:"(Dog)", v:"nice", i:"🐕", why:"Being a cutie pie"},
-  {n:"Thumper", d:"(Dog)", v:"nice", i:"🐾", why:"Passing puppy school"}
+  {n:"Tom", v:"naughty", i:"👤", photo:"assets/img/cards/tom.jpg",
+   why:"Looting the family home after our waterbomb party", tag:"drunken thief"},
+  {n:"Mum", v:"nice", i:"👤", photo:"assets/img/cards/mum.jpg", why:"Getting her D***H*** boss fired"},
+  {n:"Jev", v:"naughty", i:"👤", photo:"assets/img/cards/jev.jpg",
+   why:"Being a morning person", tag:"wake-up time: 3 am"},
+  {n:"Jack", d:"(Dog)", v:"nice", i:"🐕", photo:"assets/img/cards/jack.jpg", why:"Being a cutie pie"},
+  {n:"Dad", v:"nice", i:"👤", photo:"assets/img/cards/dad.jpg", why:"Taking care of his lawn"},
+  {n:"Ella", v:"naughty", i:"👤", photo:"assets/img/cards/ella.jpg",
+   why:"Sleeping on long car rides", tag:"passenger princess"},
+  {n:"Thumper", d:"(Dog)", v:"nice", i:"🐾", photo:"assets/img/cards/thumper.jpg", why:"Passing puppy school"},
+  {n:"Vic", v:"naughty", i:"👤", photo:"assets/img/cards/vic.jpg",
+   why:"Being too strict on a pub crawl", tag:"teacher energy"}
 ];
 
 /* The Nice List gifts (they follow the naughty or nice cards).
@@ -281,7 +288,7 @@ const gifts = {
     photo: {src: "assets/img/gifts/wine.jpg", alt: "Lach holding up a bottle of sparkling wine at the dinner table"},
     icon: "🍾",
     title: "A Bottle of Bubbly",
-    line: "From us &mdash; to make up for Lachie always stealing from the drinks cabinet."
+    line: "From us &mdash; to make up for Tom and Ella always stealing from the drinks cabinet."
   },
   dogs: {
     main: {src: "assets/img/dogs/jack-and-thumper.jpg", alt: "Jack and Thumper on the beach"},

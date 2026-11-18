@@ -480,8 +480,9 @@ function buildSlides() {
   <div class="nn-grid">
     ${people.map((p) => `
     <div class="nn ${p.v === "naughty" ? "naughty-c" : "nice-c"}" data-card tabindex="0" role="button" aria-label="${esc(p.n)}">
-      <div class="sil">${p.i}</div>
-      <div class="nm">${p.n}${p.d ? `<small>${p.d}</small>` : "<small>&nbsp;</small>"}</div>
+      <div class="sil${p.photo ? " has-photo" : ""}"><span>${p.i}</span>${p.photo
+        ? `<img src="${esc(p.photo)}" alt="" onerror="this.parentNode.classList.remove('has-photo');this.remove()">` : ""}</div>
+      <div class="nm">${p.n}${p.d ? `<small>${p.d}</small>` : ""}</div>
       <div class="why">${p.why ? `${p.why}${p.tag ? `<small>(${p.tag})</small>` : ""}` : ""}</div>
       <div class="stamp ${p.v}">${p.v.toUpperCase()}</div>
     </div>`).join("")}

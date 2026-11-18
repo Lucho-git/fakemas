@@ -999,6 +999,46 @@ body{
   box-shadow:0 18px 50px rgba(0,0,0,.55);transform:rotate(-1.5deg)}
 .interval-clip video{display:block;width:100%;height:100%;object-fit:cover}
 
+/* ============ naughty or nice: the photo in the silhouette ============ */
+/* The silhouette sits in a round frame. When the card is stamped the person's photo
+   spins into it, and the stamp lands on the card's top corner, clear of the face. */
+.nn{--face:clamp(64px,13vh,118px)}
+.nn .sil{position:relative;display:grid;place-items:center;width:var(--face);height:var(--face);margin:0 auto;
+  font-size:calc(var(--face)*.8);line-height:1;filter:none}
+.nn .sil span{filter:brightness(0) opacity(.85);transition:opacity .3s .15s}
+.nn .sil img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;
+  border:3px solid var(--gold-d);box-shadow:0 5px 14px rgba(60,30,0,.45);opacity:0;transform:scale(.15) rotate(-220deg);
+  transition:transform .7s cubic-bezier(.2,1.4,.4,1) .15s,opacity .25s .15s}
+.nn.on .sil img{opacity:1;transform:none}
+.nn.on .sil.has-photo span{opacity:0}
+.nn .nm small{display:inline;margin-left:.35em}
+.nn .stamp{left:auto;right:-12px;top:-10px;bottom:auto;font-size:clamp(.7rem,1.35vw,1rem);transform:scale(3) rotate(24deg)}
+.nn.on .stamp{transform:scale(1) rotate(9deg)}
+@media(max-height:740px){
+  .nn{--face:68px}
+  .nn-grid{margin-top:10px}
+}
+@media(max-width:640px){
+  .nn{--face:58px}
+  .nn .stamp{top:4px;right:3px;font-size:.62rem}
+}
+@media(prefers-reduced-motion:reduce){.nn .sil img{transition:opacity .2s;transform:none}}
+
+/* ============ tucking the player dock away ============ */
+/* The second round button on the dock shrinks it to a single button; the player is still
+   there, one pixel big, so the music carries on. YouTube's player has to stay in view,
+   so the button is not offered while a YouTube video is showing. */
+#yt-min{position:absolute;top:-12px;left:20px;z-index:1;width:28px;height:28px;padding:0;border-radius:50%;cursor:pointer;
+  font-size:.95rem;font-weight:700;line-height:1;color:var(--gold-l);border:2px solid var(--gold-d);
+  background:linear-gradient(180deg,#8c0f17,#4e060b)}
+#yt-min:focus-visible{outline:2px solid var(--gold-l);outline-offset:2px}
+#yt-dock[data-kind="youtube"] #yt-min{display:none}
+#yt-dock.min:not([data-kind="youtube"]){width:0;height:0;padding:0;border:0;background:none;box-shadow:none}
+#yt-dock.min:not([data-kind="youtube"]) .yt-frame.live{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+#yt-dock.min:not([data-kind="youtube"]) #yt-move{display:none}
+#yt-dock.min:not([data-kind="youtube"]) #yt-min{top:-18px;left:-18px;width:36px;height:36px;font-size:1.15rem;
+  box-shadow:0 6px 16px rgba(0,0,0,.6),0 0 14px rgba(233,196,106,.35)}
+
 /* jingle toggle */
 #bar #jingle,#bar #reset{min-width:2.9em;padding:.5em .65em;font-size:1rem}
 /* five controls have to share a phone-width bar */

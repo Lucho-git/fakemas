@@ -844,6 +844,23 @@ document.getElementById("yt-move").onclick = (e) => {
   if (e.detail) e.currentTarget.blur();
 };
 
+// The dock can also be tucked away to a small button while the music carries on.
+// (Not for YouTube, whose player has to stay in view: the styles ignore it there.)
+const ytMin = document.getElementById("yt-min");
+function setDockMin(min) {
+  ytDock.classList.toggle("min", min);
+  ytMin.textContent = min ? "♫" : "–";
+  ytMin.title = min ? "Show the player" : "Hide the player";
+  ytMin.setAttribute("aria-label", ytMin.title);
+}
+try { setDockMin(localStorage.getItem("fakemas-dock-min") === "1"); } catch (err) { setDockMin(false); }
+ytMin.onclick = (e) => {
+  const min = !ytDock.classList.contains("min");
+  setDockMin(min);
+  try { localStorage.setItem("fakemas-dock-min", min ? "1" : "0"); } catch (err) { /* private mode */ }
+  if (e.detail) e.currentTarget.blur();
+};
+
 Promise.all([present(music.playlist), present(music.slideshow)]).then(([background, slideshow]) => {
   channels = {
     jingle: makeChannel("jingle", document.getElementById("jingle-audio"), background, 0.4, "Background playlist"),
