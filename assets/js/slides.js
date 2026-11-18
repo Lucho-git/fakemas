@@ -78,9 +78,12 @@ const fxBlock = (x) => {
     Array.from({length: gold}, (_, k) => `<span class="gold" style="--i:${k}">★</span>`).join("") +
     Array.from({length: hollow}, (_, k) => `<span style="--i:${gold + k + 1}">☆</span>`).join("")
   }</span>`;
+  // a quote sits on top of the stars, in the same column
+  const rating = !f.quote ? stars
+    : `<span class="fx-rating"><span class="fx-quote">&ldquo;${f.quote}&rdquo;</span>${stars}</span>`;
   return `
         <div class="fx fx-${f.effect || "spin"}${f.shape ? ` fx-${f.shape}` : ""}">
-          <div class="fx-row">${pics}${f.shadow ? SHROUD : ""}${stars}</div>
+          <div class="fx-row">${pics}${f.shadow ? SHROUD : ""}${rating}</div>
           ${f.caption ? `<div class="fx-caption">${f.caption}</div>` : ""}
         </div>`;
 };
@@ -118,6 +121,16 @@ const questionSlide = (x, badge, cls = "", attrs = "") => `
       </div>
     </div>
   </div>
+</section>`;
+
+/* An intermission: a silent clip in a tall frame. app.js plays it, on a loop, for as
+   long as the slide is up. */
+const intermissionSlide = (x) => `
+<section class="slide interval">
+  <div class="part-no">✦ ${x.intermission} ✦</div>
+  <figure class="interval-clip">
+    <video src="${esc(x.video.src)}"${x.video.poster ? ` poster="${esc(x.video.poster)}"` : ""} muted loop playsinline preload="metadata" data-clip></video>
+  </figure>
 </section>`;
 
 /* A vote: named photos side by side, no right answer. Clicking one crowns it (click-only,
@@ -241,11 +254,14 @@ function buildSlides() {
 <section class="slide">
   <div class="part-no">✦ Part 1 ✦</div>
   <div class="title-xl">The Family<br>Christmas Quiz</div>
-  <div class="ribbon">${quiz.length} Questions from Our Family Group Chat</div>
+  <div class="ribbon">${quiz.filter((x) => !x.intermission).length} Questions from Our Family Group Chat</div>
   <div style="font-size:clamp(4rem,10vw,7rem)">📱🎄</div>
 </section>`);
 
-  quiz.forEach((x, i) => slides.push((x.choices ? voteSlide : questionSlide)(x, `Q${i + 1}`)));
+  // An intermission is a slide of its own and does not take a question number.
+  let qNo = 0;
+  quiz.forEach((x) => slides.push(x.intermission ? intermissionSlide(x)
+    : (x.choices ? voteSlide : questionSlide)(x, `Q${++qNo}`)));
 
   // Part 2 – general Christmas trivia
   section("Trivia", "🔔");
@@ -441,7 +457,17 @@ function buildSlides() {
 
   // Part 6 – Santa's Code Words
   section("Code Words", "🕵️");
-  slides.push(part(6, "Santa's<br>Code Words", "🕵️🎄"));
+  slides.push(`
+<section class="slide">
+  <div class="poster-row">
+    ${codePoster ? `<figure class="poster-shot"><img src="${esc(codePoster.src)}" alt="${esc(codePoster.alt || "")}" onerror="this.closest('figure').remove()"></figure>` : ""}
+    <div class="poster-text">
+      <div class="part-no">✦ Part 6 ✦</div>
+      <div class="title-xl" style="font-size:clamp(2.6rem,7.4vw,6.2rem)">Santa's<br>Code Words</div>
+      <div class="holly">🕵️🎄</div>
+    </div>
+  </div>
+</section>`);
   codeWords.forEach((r, i) => slides.push(codeSlide(r, i, codeWords.length)));
 
   // Part 7

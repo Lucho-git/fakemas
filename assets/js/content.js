@@ -68,12 +68,17 @@ const sfx = {
      shape    "portrait" for tall rounded frames instead of circles
      shadow   true draws a hooded mystery figure instead of a photo
      stars    gold stars that pop in afterwards; `outOf` adds empty ones up to a total
+     quote    a line in quotation marks above the stars
      caption  a line of small print underneath
 
    `faces` is a row of round photos on show with the question, before any reveal.
 
    `choices` instead of an answer makes it a vote: a row of named photos, lettered
-   A, B, C…, and clicking one crowns it.                                                */
+   A, B, C…, and clicking one crowns it.
+
+   An entry with `intermission` (its heading) and a `video` is not a question: it is a
+   slide where the clip plays by itself, silently, on a loop. It is left out of the
+   question numbering.                                                                  */
 const quiz = [
   {q:"What's the earliest we were allowed to wake Mum and Dad on Christmas Day?", a:"6 am.", icon:"⏳",
    options:["4:30 am", "6 am", "6:15 am", "8 am"], correct:"6 am"},
@@ -87,13 +92,17 @@ const quiz = [
    fx:{photos:[{src:"assets/img/people/angela.jpg", alt:"Angela"}], effect:"swivel"}},
   {q:"Who has missed the most family Christmases?", a:"Ella.", icon:"🗓️",
    fx:{photos:[{src:"assets/img/people/ella.jpg", alt:"Ella"}], effect:"bounce"}},
+  {q:"Which family would Ella rather spend Christmas with?", a:"Over to you, Ella.", icon:"🚤",
+   options:["The Ross family", "The Ellis family <i>(they have a wakesurfing boat)</i>"]},
+  {intermission:"Intermission",
+   video:{src:"assets/video/wakesurf.mp4", poster:"assets/video/wakesurf-poster.jpg"}},
   {q:"Who whinges the most if a family member isn't present for Christmas?", a:"Two star Tommy.", icon:"😭⭐⭐",
    sound:{reveal:"grumble"},
-   fx:{photos:[{src:"assets/img/two-star-tommy.jpg", alt:"Tom"}], effect:"spin", stars:2, outOf:5}},
+   fx:{photos:[{src:"assets/img/two-star-tommy.jpg", alt:"Tom"}], effect:"spin", stars:2, outOf:5, quote:"Waaa waaa waaa"}},
   {q:"What year was Vic's first family Christmas?", a:"2017.", icon:"❓",
    fx:{shadow:true, effect:"creep", caption:"Scared of being put into ChatGPT"}},
   {q:"What was Jev and Ella's first real date?", a:"Ella's side of the story wins.", icon:"",
-   faces:[{src:"assets/img/people/jev.jpg", alt:"Jev"}, {src:"assets/img/people/ella.jpg", alt:"Ella"}],
+   faces:[{src:"assets/img/people/jev.jpg", alt:"Jev"}, {src:"assets/img/people/ella-date.jpg", alt:"Ella"}],
    options:["Going to Jev's Christmas party with his friends, then going off on their own",
             "Hanging out in a tree and talking for ages"],
    correct:"Hanging out in a tree and talking for ages"},
@@ -212,7 +221,9 @@ const birds = {
    `words` is the board in reading order, four across.
    `hits` are the words that match the clue — spelt exactly as they are in `words`.
    The number shown beside the clue is just how many `hits` there are.
-   `why` is the one-line explanation shown once every answer has been found.    */
+   `why` is the one-line explanation shown once every answer has been found.
+   `codePoster` is the photo on the round's title slide.                        */
+const codePoster = {src: "assets/img/people/ella-reading.jpg", alt: "Ella reading"};
 const codeWords = [
   {
     clue: "Stocking",

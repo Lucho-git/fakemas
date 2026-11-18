@@ -46,7 +46,9 @@ then visit <http://127.0.0.1:8123/>.
 Everything you normally want to change is in [content.js](assets/js/content.js):
 
 - `players` — the names on the scoreboard (see below).
-- `quiz` — Part 1, the family questions (12 of them).
+- `quiz` — Part 1, the family questions (13 of them), with an intermission in
+  the middle: an entry with `intermission` (its heading) and a `video` is a slide
+  where a silent clip plays by itself on a loop, and it takes no question number.
 - `trivia` — Part 2, general Christmas trivia. Same shape as `quiz`, so
   `long:true` shrinks wordy answers and `media` still works. Some have
   multiple-choice options (see below).
@@ -55,6 +57,7 @@ Everything you normally want to change is in [content.js](assets/js/content.js):
   (see below).
 - `birds` — the surprise bird round after the movies (see below).
 - `codeWords` — Part 6, the "Santa's Code Words" clue game (see below).
+  `codePoster` is the photo on its title slide.
 - `people` — Part 7 cards. `v` is `"naughty"` or `"nice"`; `why` is the reason
   that appears when the card is stamped, with `tag` in brackets under it.
 - `trip` — the bonus section after the riddles: "who is Santa?", then the
@@ -377,6 +380,7 @@ its emoji:
 | `shape` | `"portrait"` for tall rounded frames. Otherwise photos are circles, so use a square image centred on the face. |
 | `shadow` | `true` draws a hooded mystery figure instead of a photo. |
 | `stars` / `outOf` | Gold stars pop in after the photo; `outOf` adds hollow ones up to that total (2 out of 5). |
+| `quote` | A line in quotation marks above the stars. |
 | `caption` | A line of small print that fades in underneath. |
 
 With several photos, `spin` brings them in from the left, top and right, and
@@ -461,6 +465,8 @@ order in the file is order on screen. Helpers:
 - Grumble (`assets/audio/sfx/grumble.mp3`): generated on this computer with the
   built-in Windows speech voice, then pitched down.
 - Film covers: not stored here; shown from each film's Wikipedia article.
+- Wakesurfing clip (`assets/video/wakesurf.mp4`): from a reel posted on Facebook
+  by Wakesurfing WA, with its soundtrack removed.
 
 - Ferret (`assets/img/ferret.jpg`): cropped from "Mustela putorius furo
   profile" by Aurélien Mora, via Wikimedia Commons, licensed

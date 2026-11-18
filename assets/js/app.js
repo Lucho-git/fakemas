@@ -89,8 +89,19 @@ function show(i, updateHash = true) {
   // A slide's arrival sound plays until its answer is revealed.
   stopSfx();
   if (els[cur].dataset.sfxEnter && pending(els[cur]).length) playSfx(els[cur].dataset.sfxEnter);
+  // An intermission clip starts from the top when its slide arrives and stops when it leaves.
+  deck.querySelectorAll("video[data-clip]").forEach((clip) => {
+    if (!els[cur].contains(clip)) return clip.pause();
+    clip.currentTime = 0;
+    clip.play().catch(() => {});
+  });
   syncAuto();
 }
+
+// A browser will not start a clip in a hidden tab, so try again when the page comes back.
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) els[cur].querySelectorAll("video[data-clip]").forEach((clip) => clip.play().catch(() => {}));
+});
 
 // Puts a slide back to how it was before anything was revealed, flipped, stamped or matched.
 function resetSlide(slide) {

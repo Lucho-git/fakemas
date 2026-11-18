@@ -979,6 +979,26 @@ body{
   .nn .why{font-size:.68rem}
 }
 
+/* ============ a quote above the stars ============ */
+.fx-rating{display:flex;flex-direction:column;align-items:center;gap:.15em}
+.fx-quote{opacity:0;font-family:'Playfair Display',serif;font-style:italic;font-weight:700;line-height:1.1;
+  font-size:clamp(1.1rem,3.6vh,2.1rem);color:var(--red-d)}
+.rv.on .fx-quote{animation:fx-wail 1.1s ease both;animation-delay:1.7s}
+@keyframes fx-wail{
+  0%{opacity:0;transform:scale(.4) rotate(-6deg)}
+  55%{opacity:1;transform:scale(1.18) rotate(3deg)}
+  75%{transform:scale(.97) rotate(-2deg)}
+  100%{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){
+  .rv.on .fx-quote{animation:none;opacity:1}
+}
+
+/* ============ intermission: a clip that plays itself ============ */
+.interval-clip{flex:none;margin:clamp(8px,1.6vh,16px) 0 0;height:min(60vh,calc((100vw - 56px)*16/9));aspect-ratio:9/16;
+  border-radius:22px;overflow:hidden;background:#000;border:5px solid var(--gold-d);
+  box-shadow:0 18px 50px rgba(0,0,0,.55);transform:rotate(-1.5deg)}
+.interval-clip video{display:block;width:100%;height:100%;object-fit:cover}
+
 /* jingle toggle */
 #bar #jingle,#bar #reset{min-width:2.9em;padding:.5em .65em;font-size:1rem}
 /* five controls have to share a phone-width bar */
