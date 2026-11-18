@@ -96,17 +96,22 @@ const answerLabel = (x) => {
 /* One question slide: badge, question, then a click/Space reveal.
    `badge` is the label in the corner ("Q3"); `cls` adds a slide style and `attrs`
    extra attributes. A question's own `kicker` is a banner above it, and its `photo`
-   is a picture on show from the start (unlike `media`, which waits for the answer). */
+   (or row of round `faces`) is on show from the start, unlike `media`, which waits for
+   the answer. `sound` names clips from `sfx` to play on arrival and on the reveal. */
+const facesRow = (faces) => !faces ? "" : `
+    <div class="q-faces">${faces.map((f) =>
+      `<img src="${esc(f.src)}" alt="${esc(f.alt || "")}" onerror="this.remove()">`).join("")}</div>`;
+
 const questionSlide = (x, badge, cls = "", attrs = "") => `
-<section class="slide ${cls}"${attrs}>
+<section class="slide ${cls}"${attrs}${x.sound && x.sound.enter ? ` data-sfx-enter="${esc(x.sound.enter)}"` : ""}>
   <div class="qbadge"${badge.length > 3 ? ' style="font-size:1.15rem"' : ""}>${badge}</div>
   <div class="parch">
     ${x.kicker ? `<div class="q-kicker">${x.kicker}</div>` : ""}
     <h2 class="q" style="padding-top:${x.kicker ? "6px" : "clamp(36px,6vw,20px)"}">${x.q}</h2>
-    ${x.photo ? `<div class="q-photo${x.options ? " with-opts" : ""}">${media(x.photo)}</div>` : ""}${optionList(x)}
-    <div class="stage${x.photo ? " slim" : ""}">
+    ${x.photo ? `<div class="q-photo${x.options ? " with-opts" : ""}">${media(x.photo)}</div>` : ""}${facesRow(x.faces)}${optionList(x)}
+    <div class="stage${x.photo || x.faces ? " slim" : ""}">
       ${mystery("Reveal answer", "🎁")}
-      <div class="rv" data-rv>
+      <div class="rv" data-rv${x.sound && x.sound.reveal ? ` data-sfx="${esc(x.sound.reveal)}"` : ""}>
         ${media(x.media)}
         ${x.fx ? fxBlock(x) : `<div class="art">${x.icon}</div>`}
         <div class="answer ${x.long ? "long" : ""}">${answerLabel(x)}${x.a}</div>
@@ -205,6 +210,22 @@ const SHADOW_FIGURES = `
         <text x="316" y="236">?</text>
       </svg>`;
 
+/* The dogs' gift: the main photo in the middle, the others fanned out either side of it. */
+const pupPhotos = (g) => {
+  const pup = (p, k, cls = "") =>
+    `<img class="pup${cls}" style="--i:${k};--r:${[-6, 4, 0, -4, 6][k % 5]}deg" src="${esc(p.src)}" alt="${esc(p.alt || "")}" onerror="this.remove()">`;
+  const more = g.more || [];
+  const half = Math.ceil(more.length / 2);
+  return [
+    ...more.slice(0, half).map((p, k) => pup(p, k)),
+    pup(g.main, 2, " pup-main"),
+    ...more.slice(half).map((p, k) => pup(p, k + 3))
+  ].join("");
+};
+
+/* How the slideshow photos arrive, used in turn (keyframes: "slideshow" in styles.css). */
+const SHOW_ENTRANCES = ["spin", "drop", "fly-r", "zoom", "swing", "fly-l", "flip", "roll"];
+
 /* The timeline along the bottom: one entry per section, filled in by buildSlides.
    `start` is the index of the section's first slide. */
 const sections = [];
@@ -254,11 +275,13 @@ function buildSlides() {
   slides.push(`
 <section class="slide">
   <div class="parch">
-    <h2 class="script" style="font-weight:400;font-size:clamp(2.2rem,5vw,3.6rem);color:var(--red-d)">Open Question &amp; Answer</h2>
-    <p>Write down the reasons you think each of you has been on the kids' Naughty Lists.</p>
+    <h2 class="script" style="font-weight:400;font-size:clamp(2.2rem,5vw,3.6rem);color:var(--red-d)">We Know What You Did</h2>
+    <p>Your children already have an answer in mind.</p>
+    <p>We won't be telling you what it is. <b>You'll be telling us.</b></p>
+    <p class="must-write">Leaving it blank is not an option. You must write something down.</p>
     <div class="writes">
-      <div class="write"><b>Mum's Guess</b><small>(Why am I on the Naughty List?)</small></div>
-      <div class="write"><b>Dad's Guess</b><small>(Why am I on the Naughty List?)</small></div>
+      <div class="write"><b>Mum's Answer</b><small>(What do you think you did?)</small></div>
+      <div class="write"><b>Dad's Answer</b><small>(What do you think you did?)</small></div>
     </div>
   </div>
 </section>`);
@@ -322,19 +345,33 @@ function buildSlides() {
   <div class="trip-flag">🌴</div>
 </section>`);
 
+  // Each photo arrives with the next entrance in SHOW_ENTRANCES while the one before it
+  // slides off to rest at the side, on top of the one before that. Every photo slide but
+  // the last has data-auto, so the deck moves through them on its own and then waits.
+  const tilt = (k) => (k % 2 ? "tilt-r" : "tilt-l");
+  const rest = (k) => (k % 2 ? "rest-r" : "rest-l");
+  const older = (k, cls) => `<figure class="photo-frame show-old ${cls} ${tilt(k)} ${rest(k)}" aria-hidden="true">
+      <img src="${esc(trip.photos[k].src)}" alt="">
+    </figure>`;
   trip.photos.forEach((photo, i) => {
+    const last = i === trip.photos.length - 1;
     // The last photo carries the sign-off, written on the polaroid.
-    const last = i === trip.photos.length - 1 && trip.outro;
-    const caption = last
+    const caption = last && trip.outro
       ? `<figcaption class="outro"><span class="outro-title">${trip.outro.title}</span>${trip.outro.line}</figcaption>`
       : photo.caption ? `<figcaption>${photo.caption}</figcaption>` : "";
+    const auto = !last && trip.autoplay > 0;
     slides.push(`
-<section class="slide trip" data-music="trip">
+<section class="slide trip show" data-music="trip"${auto ? ` data-auto="${trip.autoplay}"` : ""}>
   <div class="trip-tag">🌴 Philippines · ${String(i + 1).padStart(2, "0")} / ${trip.photos.length}</div>
-  <figure class="photo-frame ${i % 2 ? "tilt-r" : "tilt-l"}">
-    <img src="${esc(photo.src)}" alt="${esc(photo.alt || photo.caption || `Philippines trip photo ${i + 1}`)}" loading="lazy">
-    ${caption}
-  </figure>
+  <div class="show-stage">
+    ${i > 1 ? older(i - 2, "show-older") : ""}
+    ${i > 0 ? older(i - 1, "show-prev") : ""}
+    <figure class="photo-frame show-new in-${SHOW_ENTRANCES[i % SHOW_ENTRANCES.length]} ${tilt(i)}">
+      <img src="${esc(photo.src)}" alt="${esc(photo.alt || photo.caption || `Philippines trip photo ${i + 1}`)}">
+      ${caption}
+    </figure>
+  </div>
+  ${auto ? `<div class="auto-bar" aria-hidden="true"><i></i></div>` : ""}
 </section>`);
   });
 
@@ -363,9 +400,17 @@ function buildSlides() {
     slides.push(`
 <section class="slide movie">
   <div class="movie-head">Scene ${i + 1} of ${movieScenes.length} · Which Christmas movie is this from?</div>
-  <figure class="movie-shot">
-    <img src="assets/img/movies/${m.file}" alt="Christmas movie scene ${i + 1}">
-  </figure>
+  <div class="movie-stage">
+    <figure class="movie-shot">
+      <img src="assets/img/movies/${m.file}" alt="Christmas movie scene ${i + 1}">
+    </figure>
+    <div class="dvd" aria-hidden="true">
+      <div class="dvd-cover">
+        <span><i>🎬</i>${m.title}</span>
+        ${m.cover ? `<img src="${esc(m.cover)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}
+      </div>
+    </div>
+  </div>
   <div class="stage">
     ${mystery("Reveal movie", "🎬")}
     <div class="rv" data-rv>
@@ -381,10 +426,15 @@ function buildSlides() {
   section("Birds", "🐦");
   slides.push(`
 <section class="slide">
-  <div class="part-no">✦ Surprise Round ✦</div>
-  <div class="title-xl" style="font-size:clamp(3rem,10vw,7.5rem)">${birds.title}</div>
-  <div class="ribbon">${birds.ribbon}</div>
-  <div class="holly">🐦🔭</div>
+  <div class="poster-row">
+    ${birds.poster ? `<figure class="poster-shot"><img src="${esc(birds.poster.src)}" alt="${esc(birds.poster.alt || "")}" onerror="this.closest('figure').remove()"></figure>` : ""}
+    <div class="poster-text">
+      <div class="part-no">✦ Surprise Round ✦</div>
+      <div class="title-xl" style="font-size:clamp(2.6rem,7.4vw,6.2rem)">${birds.title}</div>
+      <div class="ribbon">${birds.ribbon}</div>
+      <div class="holly">🐦🔭</div>
+    </div>
+  </div>
 </section>`);
   slides.push(questionSlide(birds.opener, "Bird 1"));
   slides.push(matchSlide(birds.match));
@@ -475,14 +525,19 @@ function buildSlides() {
 
   slides.push(`
 <section class="slide">
-  <div class="parch" style="width:min(760px,100%)">
+  <div class="parch" style="width:min(860px,100%)">
     <h2 class="script" style="font-weight:400;font-size:clamp(2.4rem,5.5vw,4rem);color:var(--red-d)">A Gift for Mum &amp; Dad</h2>
     <div class="stage">
       ${mystery("Unwrap your gift", "🎁")}
-      <div class="rv" data-rv>
-        <div class="art">🎁✨</div>
-        <p><b>A well-earned treat!</b></p>
-        <p style="font-style:italic;font-size:clamp(.95rem,1.9vw,1.25rem)">(A special experience or indulgence for the two of you to enjoy together!)</p>
+      <div class="rv" data-rv style="width:100%">
+        <div class="gift-row">
+          <img class="gift-photo" src="${esc(gifts.parents.photo.src)}" alt="${esc(gifts.parents.photo.alt || "")}" onerror="this.remove()">
+          <div class="ticket">
+            <div class="gift-icon">${gifts.parents.icon}</div>
+            <h3>${gifts.parents.title}</h3>
+            <p style="margin-top:8px">${gifts.parents.line}</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -490,13 +545,13 @@ function buildSlides() {
 
   slides.push(`
 <section class="slide">
-  <div class="parch" style="width:min(760px,100%)">
+  <div class="parch" style="width:min(920px,100%)">
     <h2 class="script" style="font-weight:400;font-size:clamp(2.4rem,5.5vw,4rem);color:var(--red-d)">Treats for Jack &amp; Thumper</h2>
     <div class="stage">
       ${mystery("Open the bowl", "🥣")}
-      <div class="rv" data-rv>
-        <div class="art">🦴🐕🐾</div>
-        <p><b>A Christmas stash of their favourite treats!</b></p>
+      <div class="rv" data-rv style="width:100%">
+        <div class="pups">${pupPhotos(gifts.dogs)}</div>
+        <p><b>🦴 ${gifts.dogs.line} 🐾</b></p>
       </div>
     </div>
   </div>
@@ -504,6 +559,18 @@ function buildSlides() {
 
   // Finale
   section("Finale", "🎄");
+  // The teaser: the envelope opens on whoever is leading the scoreboard (app.js fills it in).
+  slides.push(`
+<section class="slide">
+  <div class="part-no">✦ The Scores Are In ✦</div>
+  <div class="title-xl" style="font-size:clamp(3rem,9vw,7rem)">And the<br>Winner Is&hellip;</div>
+  <div class="stage winner-stage">
+    ${mystery("Open the envelope", "✉️")}
+    <div class="rv" data-rv>
+      <div class="winner" data-winner></div>
+    </div>
+  </div>
+</section>`);
   slides.push(`
 <section class="slide">
   <div class="parch" style="width:min(620px,100%)">

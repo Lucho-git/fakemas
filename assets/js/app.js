@@ -33,6 +33,9 @@ function revealNext() {
   if (!item) return false;
   item.classList.add("on");
   if (item.hasAttribute("data-match-reveal")) gradeMatch(slide);
+  // A reveal with a sound plays it; any other reveal just ends the slide's arrival sound.
+  if (item.dataset.sfx) playSfx(item.dataset.sfx);
+  else stopSfx();
   syncMystery(slide);
   return true;
 }
@@ -83,10 +86,15 @@ function show(i, updateHash = true) {
   nextBtn.disabled = cur === els.length - 1;
   progEl.style.width = `${((cur + 1) / els.length) * 100}%`;
   if (updateHash) history.replaceState(null, "", `#${cur + 1}`);
+  // A slide's arrival sound plays until its answer is revealed.
+  stopSfx();
+  if (els[cur].dataset.sfxEnter && pending(els[cur]).length) playSfx(els[cur].dataset.sfxEnter);
+  syncAuto();
 }
 
 // Puts a slide back to how it was before anything was revealed, flipped, stamped or matched.
 function resetSlide(slide) {
+  if (slide === els[cur]) stopSfx();
   slide.querySelectorAll("[data-rv].on, [data-card].on, [data-flip].on").forEach((el) => el.classList.remove("on"));
   resetMatch(slide);
   syncMystery(slide);
@@ -95,8 +103,9 @@ function resetDeck(everything) {
   (everything ? els : [els[cur]]).forEach(resetSlide);
 }
 
-const next = () => show(cur + 1);
-const prev = () => show(cur - 1);
+// Stepping back into the self-running slideshow pauses it; stepping forward carries on.
+const next = () => { autoPaused = false; show(cur + 1); };
+const prev = () => { autoPaused = true; show(cur - 1); };
 
 nextBtn.onclick = next;
 prevBtn.onclick = prev;
@@ -181,6 +190,14 @@ function paintScores() {
     list.innerHTML = ranked.map((t) =>
       `<li class="${leads(t) ? "lead" : ""}"><span class="ic">${leads(t) ? "👑" : "🎄"}</span>` +
       `<span class="fs-name">${teamName(t)}</span><b>${t.score}</b></li>`).join("");
+  });
+  // The "And the winner is…" slide: whoever leads, or everyone who shares the lead.
+  const champs = board.filter(leads);
+  deck.querySelectorAll("[data-winner]").forEach((el) => {
+    el.innerHTML = champs.length
+      ? `<span class="winner-crown">👑</span><span class="winner-name">${champs.map(teamName).join(" <i>and</i> ")}</span>` +
+        `<span class="winner-line">${champs.length > 1 ? "tied on" : "with"} ${best} point${best === 1 ? "" : "s"}</span>`
+      : `<span class="winner-name">Nobody yet!</span><span class="winner-line">There are no points on the scoreboard</span>`;
   });
 }
 
@@ -435,6 +452,8 @@ function makeChannel(name, el, tracks, volume, label) {
   let yt = null;            // this channel's YouTube player, made when first needed
   let ytReady = false;
   let ytWanted = null;      // the video the player should be showing
+  let ducked = false;       // turned down while a sound effect plays
+  const level = () => volume * (ducked ? 0.3 : 1);
   el.volume = volume;
 
   const onYouTube = () => Boolean(now && now.youtube);
@@ -480,7 +499,7 @@ function makeChannel(name, el, tracks, volume, label) {
         videoId: id,
         playerVars: {playsinline: 1, rel: 0},
         events: {
-          onReady: () => { ytReady = true; yt.setVolume(Math.round(volume * 100)); showVideo(); },
+          onReady: () => { ytReady = true; yt.setVolume(Math.round(level() * 100)); showVideo(); },
           onStateChange: (e) => {
             if (e.data !== YT.PlayerState.ENDED || !onYouTube()) return;
             if (pool.length <= 1) { yt.seekTo(0); yt.playVideo(); } // a lone track just loops
@@ -552,7 +571,12 @@ function makeChannel(name, el, tracks, volume, label) {
     },
     tracks: () => (pool.length ? pool : standIn ? [standIn] : []),
     current: () => now,
-    choose: (track) => load(true, track)
+    choose: (track) => load(true, track),
+    duck: (on) => {
+      ducked = on;
+      el.volume = level();
+      if (ytReady) yt.setVolume(Math.round(level() * 100));
+    }
   };
   load(false);
   return channel;
@@ -616,6 +640,7 @@ function toggleMusicMenu(open = musicMenu.hidden) {
 }
 function toggleMute() {
   musicWanted = !musicWanted;
+  if (!musicWanted) stopSfx();
   syncMusic();
 }
 
@@ -661,6 +686,60 @@ paintMusicMenu();
   document.addEventListener(evt, syncMusic, {passive: true})
 );
 
+/* ============ SOUND EFFECTS ============ */
+// Named clips from `sfx` in content.js, one playing at a time. A slide's data-sfx-enter
+// plays when the deck arrives on it; a data-sfx on a reveal plays as it is revealed.
+// The music dips while a clip plays, and muting the music silences these too.
+const sfxPlayers = {};
+Object.entries(typeof sfx === "undefined" ? {} : sfx).forEach(([name, src]) => {
+  const clip = new Audio(src);
+  clip.preload = "auto";
+  clip.addEventListener("ended", () => duckMusic(false));
+  clip.addEventListener("error", () => duckMusic(false));
+  sfxPlayers[name] = clip;
+});
+function duckMusic(on) {
+  if (channels) Object.values(channels).forEach((channel) => channel.duck(on));
+}
+function stopSfx() {
+  Object.values(sfxPlayers).forEach((clip) => { if (!clip.paused) clip.pause(); });
+  duckMusic(false);
+}
+function playSfx(name) {
+  stopSfx();
+  const clip = sfxPlayers[name];
+  if (!clip || !musicWanted) return;
+  try { clip.currentTime = 0; } catch (err) { /* not loaded yet: it starts from the top anyway */ }
+  duckMusic(true);
+  const started = clip.play();
+  if (started && started.catch) started.catch(() => duckMusic(false)); // blocked until the first gesture
+}
+
+/* ============ AUTOPLAY ============ */
+// A slide with data-auto="seconds" moves on by itself (the Philippines photos). Space and →
+// still skip ahead. ← steps back and pauses; P pauses and resumes. The last photo has no
+// data-auto, so the deck stops there and waits for the host.
+let autoTimer = null;
+let autoPaused = false;
+function syncAuto() {
+  clearTimeout(autoTimer);
+  autoTimer = null;
+  els.forEach((el) => el.classList.remove("auto-run", "auto-held"));
+  const slide = els[cur];
+  const seconds = Number(slide.dataset.auto);
+  if (!seconds) { autoPaused = false; return; }
+  if (autoPaused) { slide.classList.add("auto-held"); return; }
+  slide.style.setProperty("--auto", `${seconds}s`);
+  void slide.offsetWidth;            // restart the countdown bar's animation
+  slide.classList.add("auto-run");
+  autoTimer = setTimeout(() => show(cur + 1), seconds * 1000);
+}
+function toggleAuto() {
+  if (!els[cur].dataset.auto) return;
+  autoPaused = !autoPaused;
+  syncAuto();
+}
+
 /* `data-card` turns over on click or on Space (in order); `data-flip` on click only. */
 const FLIPPABLE = "[data-card], [data-flip]";
 const isUnflipped = (t) =>
@@ -699,6 +778,7 @@ document.addEventListener("keydown", (e) => {
     case "s": case "S": toggleScores(); break;
     case "r": case "R": resetDeck(e.shiftKey); break; // with Shift: every slide
     case "m": case "M": toggleMute(); break;
+    case "p": case "P": toggleAuto(); break;
     case "Escape": toggleScores(false); toggleMusicMenu(false); break;
   }
 });

@@ -18,9 +18,12 @@ assets/img/trip/          the Philippines bonus slideshow
 assets/img/movies/        "guess the movie scene" stills
 assets/img/people/        photos for the family quiz answers
 assets/img/birds/         the bird round
+assets/img/dogs/          Jack & Thumper, for their gift card
+assets/img/gifts/         photos on the other gift cards
 assets/video/             video clips
 assets/audio/jingle.mp3   background jingle (loops)
 assets/audio/trip.mp3     stand-in music for the Philippines slideshow
+assets/audio/sfx/         sound effects (grumble, wolf howl, dog bark)
 assets/audio/local/       optional: your own audio files — not in git, never published
 ```
 
@@ -106,6 +109,11 @@ it. Add `options` and `correct` to make it multiple choice (most of them are). T
 Image `alt` text is deliberately generic ("Christmas movie scene 3") so screen
 readers don't spoil the answer.
 
+**Covers.** When a scene's title is revealed, the film's cover spins in as a DVD
+case. `cover` on each scene is the address of its poster, shown straight from
+Wikipedia rather than stored in this project, so it needs internet. With no
+connection (or no `cover`) the case shows the film's title instead.
+
 ## Do You Know Your Birds?
 
 The surprise round after the movies, set in `birds` in
@@ -123,7 +131,9 @@ The surprise round after the movies, set in `birds` in
 `Space` shows the answers: every photo moves to its correct name, still wearing
 its number, so the key reads straight off the screen. Any photo that had been
 dragged into place also gets a ✓ or ✗.
-Photos are in `assets/img/birds/`, cropped to 4:3.
+Photos are in `assets/img/birds/`, cropped to 4:3. `birds.poster` is the photo
+beside the title on the round's opening slide (Dad); delete the line to go
+without one.
 
 ## Santa's Code Words
 
@@ -164,12 +174,16 @@ It runs in four beats, all set in `trip` inside
 2. **The credit** — "This quiz was brought to you by" (`credit.lead`) and
    `credit.names`. The slideshow music starts here.
 3. **The photos** — one slide per photo and nothing else: no captions,
-   commentary or interjection slides. The last photo carries the sign-off from
-   `outro` ("Fakemas — brought to you by Lach & Eleanor") on its polaroid.
+   commentary or interjection slides. Each photo arrives with its own entrance
+   (spin, drop, fly, zoom, swing, flip, roll) while the one before it slides off
+   to rest at the side, so up to three are on screen at once. The last photo
+   carries the sign-off from `outro` ("Fakemas — brought to you by Lach &
+   Eleanor") on its polaroid.
 4. **The pop quiz** — first `stop`: a photo of Lach holding up a stop sign slams
    in beside "Stop right there!", the line under it and the "worth triple
    points" banner (`title`, `line`, `kicker`). Then `popQuiz`, the question
-   itself, on the next slide. Its `media` photo appears with the answer.
+   itself, on the next slide. Its `media` photo appears with the answer. A wolf
+   howls while the question is up and dogs bark on the reveal (its `sound`).
    Delete `stop` or `popQuiz` to drop either slide.
 
 ```js
@@ -191,6 +205,10 @@ const trip = {
 
 - Photos run in list order; each gets a polaroid frame and the counter
   `01 / 29`. Reorder the lines to reorder the slideshow.
+- **It plays by itself.** `autoplay: 5` moves to the next photo every 5 seconds;
+  a thin bar under the photo counts down. `Space` or `→` skips ahead, `←` steps
+  back and pauses, and `P` pauses and resumes. It stops on the last photo and
+  waits for you. Set `autoplay: 0` to turn it off and click through by hand.
 - The current order is `flex-01…flex-14` (the "Lach Flexing" set, in the order
   of that folder) and then the couple set as
   `trip-01, 06, 07, 03, 04, 05, 08, 02, 09, 10, 11, 12, 13, 14, 15`.
@@ -198,6 +216,32 @@ const trip = {
   slightly smaller to make room.
 - `reveal.photo` works best as a landscape photo with both faces near the
   middle; it is cropped to a 4:3 frame.
+
+## Sound effects
+
+Short clips live in `assets/audio/sfx/` and are named in `sfx` at the top of
+[content.js](assets/js/content.js). Any question can play them:
+
+```js
+sound: { reveal: "grumble" }               // plays as the answer is revealed
+sound: { enter: "howl", reveal: "bark" }   // `enter` starts when the slide arrives
+                                           // and stops at the reveal
+```
+
+Two Star Tommy grumbles; the pop quiz howls and barks. The music dips while a
+clip plays, and muting the music (`M`) silences the effects too. To swap a
+sound, replace its file or point its name at another one.
+
+## Gifts and the winner
+
+The two Nice List gift cards are set in `gifts` in
+[content.js](assets/js/content.js): `parents` (a photo beside a ticket with
+`icon`, `title` and `line`) and `dogs` (a `main` photo with the `more` photos
+fanned out around it, and a `line` underneath).
+
+The Finale opens with a teaser, "And the Winner Is…". Its envelope opens on
+whoever is leading the scoreboard at that moment (a tie names everyone on the
+top score); the full table is on the next slide.
 
 ## Scoreboard
 
@@ -332,7 +376,8 @@ by side, lettered and named, and clicking one crowns it. ↺ clears the crown.
 ```
 
 A question can also carry a `photo` (shown from the start, unlike `media`, which
-waits for the answer) and a `kicker` (a banner above the question).
+waits for the answer), `faces` (a row of round photos shown from the start, as
+on the first-date question) and a `kicker` (a banner above the question).
 
 ## Controls
 
@@ -343,6 +388,7 @@ waits for the answer) and a `kicker` (a banner above the question).
 | First / last slide | `Home` / `End` |
 | Fullscreen | `F` or the button |
 | Scoreboard | `S` or the 🏆 button (`Esc` closes it) |
+| Pause / resume the self-running slideshow | `P` |
 | Music menu / mute | the ♪ button / `M` |
 | Reset this slide | `R` or the ↺ button |
 | Reset every slide | `Shift`+`R` or `Shift`-click ↺ |
@@ -384,7 +430,16 @@ order in the file is order on screen. Helpers:
 - `data-card` on an element makes it turn over on click *and* on `Space` (in
   page order); `data-flip` makes it turn over on click only.
 
-## Photo credits
+## Photo and sound credits
+
+- Wolf howl (`assets/audio/sfx/wolf-howl.mp3`): the first 20 seconds of
+  "Wolf howls.ogg" from Wikimedia Commons, public domain.
+- Dog bark (`assets/audio/sfx/dog-bark.mp3`): "Barking of a dog" by Amada44, via
+  Wikimedia Commons, played twice over, licensed
+  [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+- Grumble (`assets/audio/sfx/grumble.mp3`): generated on this computer with the
+  built-in Windows speech voice, then pitched down.
+- Film covers: not stored here; shown from each film's Wikipedia article.
 
 - Ferret (`assets/img/ferret.jpg`): cropped from "Mustela putorius furo
   profile" by Aurélien Mora, via Wikimedia Commons, licensed

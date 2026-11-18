@@ -34,6 +34,18 @@ const music = {
   ]
 };
 
+/* Sound effects: short clips in assets/audio/sfx/, each with a name.
+   Any question can play them with `sound`:
+     sound: {reveal: "grumble"}              plays as the answer is revealed
+     sound: {enter: "howl", reveal: "bark"}  `enter` starts when the slide arrives and
+                                             stops at the reveal
+   The music dips while a clip plays, and muting the music (M) silences these too. */
+const sfx = {
+  grumble: "assets/audio/sfx/grumble.mp3",
+  howl:    "assets/audio/sfx/wolf-howl.mp3",
+  bark:    "assets/audio/sfx/dog-bark.mp3"
+};
+
 /* Part 1 — family quiz.
    Optional `media` on any question, e.g.
    { q:"…", a:"…", icon:"🎅", media:{ src:"assets/img/santa.jpg", alt:"Santa at the door" } }
@@ -53,6 +65,8 @@ const music = {
      stars    gold stars that pop in afterwards; `outOf` adds empty ones up to a total
      caption  a line of small print underneath
 
+   `faces` is a row of round photos on show with the question, before any reveal.
+
    `choices` instead of an answer makes it a vote: a row of named photos, lettered
    A, B, C…, and clicking one crowns it.                                                */
 const quiz = [
@@ -69,14 +83,15 @@ const quiz = [
   {q:"Who has missed the most family Christmases?", a:"Ella.", icon:"🗓️",
    fx:{photos:[{src:"assets/img/people/ella.jpg", alt:"Ella"}], effect:"bounce"}},
   {q:"Who whinges the most if a family member isn't present for Christmas?", a:"Two star Tommy.", icon:"😭⭐⭐",
+   sound:{reveal:"grumble"},
    fx:{photos:[{src:"assets/img/two-star-tommy.jpg", alt:"Tom"}], effect:"spin", stars:2, outOf:5}},
   {q:"What year was Vic's first family Christmas?", a:"2017.", icon:"❓",
    fx:{shadow:true, effect:"creep", caption:"Scared of being put into ChatGPT"}},
-  {q:"What was Jev and Ella's first real date?", a:"Ella's side of the story wins.", icon:"💕",
+  {q:"What was Jev and Ella's first real date?", a:"Ella's side of the story wins.", icon:"",
+   faces:[{src:"assets/img/people/jev.jpg", alt:"Jev"}, {src:"assets/img/people/ella.jpg", alt:"Ella"}],
    options:["Going to Jev's Christmas party with his friends, then going off on their own",
             "Hanging out in a tree and talking for ages"],
-   correct:"Hanging out in a tree and talking for ages",
-   fx:{photos:[{src:"assets/img/people/jev.jpg", alt:"Jev"}, {src:"assets/img/people/ella-date.jpg", alt:"Ella"}], effect:"fly"}},
+   correct:"Hanging out in a tree and talking for ages"},
   {q:"Which animal would make Jev wig out the most if Ella gave him one for Christmas?", a:"A ferret.", icon:"😱",
    options:["Puppy", "Ferret", "Bird", "Snake"], correct:"Ferret",
    fx:{effect:"ambush",
@@ -133,26 +148,30 @@ const riddles = [
    `file` lives in assets/img/movies/, `title` is the answer revealed on Space.
    `q`, `a` and `icon` make the follow-up question on the next slide, so nobody
    sees the film's name or its question until the scene has been guessed.
-   Leave `q` off a scene to skip its question. `options`/`correct` work here too. */
+   Leave `q` off a scene to skip its question. `options`/`correct` work here too.
+   `cover` is the film's poster, which spins in as a DVD case when the title is revealed.
+   These are shown straight from Wikipedia rather than copied into the project, so they
+   need internet; without it (or without a `cover`) the case shows the title instead. */
+const WIKI = "https://upload.wikimedia.org/wikipedia/";
 const movieScenes = [
-  {file:"bad-santa.jpg", title:"Bad Santa",
+  {file:"bad-santa.jpg", title:"Bad Santa", cover:WIKI + "en/c/cc/Bad_Santa_film.jpg",
    q:"Why does Willie really take the job as a mall Santa?", a:"To rob the mall.", icon:"💰",
    options:["To hide from the police", "To rob the mall", "To win back his ex-wife", "To pay off a bet"], correct:"To rob the mall"},
-  {file:"home-alone.jpg", title:"Home Alone",
+  {file:"home-alone.jpg", title:"Home Alone", cover:WIKI + "en/7/76/Home_alone_poster.jpg",
    q:"Which city does the family fly to when they leave Kevin behind?", a:"Paris.", icon:"✈️",
    options:["London", "New York", "Paris", "Rome"], correct:"Paris"},
-  {file:"its-a-wonderful-life.jpg", title:"It's a Wonderful Life",
+  {file:"its-a-wonderful-life.jpg", title:"It's a Wonderful Life", cover:WIKI + "commons/thumb/2/25/It%27s_a_Wonderful_Life_%281946_poster%29.jpeg/500px-It%27s_a_Wonderful_Life_%281946_poster%29.jpeg",
    q:"According to Zuzu, what happens every time a bell rings?", a:"An angel gets his wings.", icon:"🔔👼"},
-  {file:"love-actually.jpg", title:"Love Actually",
+  {file:"love-actually.jpg", title:"Love Actually", cover:WIKI + "en/e/eb/Love_Actually_movie.jpg",
    q:"Which actor plays the Prime Minister?", a:"Hugh Grant.", icon:"🕺",
    options:["Colin Firth", "Liam Neeson", "Alan Rickman", "Hugh Grant"], correct:"Hugh Grant"},
-  {file:"die-hard.jpg", title:"Die Hard",
+  {file:"die-hard.jpg", title:"Die Hard", cover:WIKI + "en/c/ca/Die_Hard_%281988_film%29_poster.jpg",
    q:"Die Hard takes place at an office party on which night?", a:"Christmas Eve.", icon:"🎄💥",
    options:["Christmas Eve", "New Year's Eve", "Halloween", "Thanksgiving"], correct:"Christmas Eve"},
-  {file:"the-grinch.jpg", title:"The Grinch",
+  {file:"the-grinch.jpg", title:"The Grinch", cover:WIKI + "en/e/e7/How_the_Grinch_Stole_Christmas_film_poster.jpg",
    q:"What is the Grinch's dog called?", a:"Max.", icon:"🐕",
    options:["Rex", "Scout", "Max"], correct:"Max"},
-  {file:"elf.jpg", title:"Elf",
+  {file:"elf.jpg", title:"Elf", cover:WIKI + "en/d/df/Elf_movie.jpg",
    q:"According to Buddy, what are an elf's four main food groups?", a:"Candy, candy canes, candy corn and syrup.", icon:"🍬", long:true,
    options:["Cookies, cocoa, candy canes and cake", "Candy, candy canes, candy corn and syrup",
             "Sugar, spaghetti, sprinkles and syrup", "Gingerbread, eggnog, fudge and frosting"],
@@ -160,6 +179,7 @@ const movieScenes = [
 ];
 
 /* Surprise round — do you know your birds? (runs after the movie round)
+   `poster` is the photo on the round's title slide.
    `opener` is an ordinary question with its `photo` on show from the start.
    `match` is the drag-and-drop game: every bird gets a letter in the order listed
    here (A, B, C…), the photos are dealt out shuffled, and players drag each photo
@@ -167,6 +187,7 @@ const movieScenes = [
 const birds = {
   title: "Do You Know<br>Your Birds?",
   ribbon: "Surprise Birdwatching Enthusiast Questionnaire",
+  poster: {src: "assets/img/people/dad-poster.jpg", alt: "Dad"},
   opener: {
     q: "What kind of bird is this?", a: "A Black Currawong.", icon: "",
     photo: {src: "assets/img/birds/black-currawong.jpg", alt: "A black bird with a yellow eye on a railing"}
@@ -235,6 +256,27 @@ const people = [
   {n:"Thumper", d:"(Dog)", v:"nice", i:"🐾"}
 ];
 
+/* The Nice List gifts (they follow the naughty or nice cards).
+   `parents`: a photo beside a ticket. `dogs`: one main photo with smaller ones around it. */
+const gifts = {
+  parents: {
+    photo: {src: "assets/img/gifts/wine.jpg", alt: "Lach holding up a bottle of sparkling wine at the dinner table"},
+    icon: "🍾",
+    title: "A Bottle of Bubbly",
+    line: "From us &mdash; to make up for Lachie always stealing from the drinks cabinet."
+  },
+  dogs: {
+    main: {src: "assets/img/dogs/jack-and-thumper.jpg", alt: "Jack and Thumper on the beach"},
+    more: [
+      {src: "assets/img/dogs/thumper-puppy-school.jpg", alt: "Thumper with his puppy school certificate"},
+      {src: "assets/img/dogs/thumper-fetch.jpg",        alt: "Thumper running with a ball"},
+      {src: "assets/img/dogs/thumper-swim.jpg",         alt: "Thumper in the surf"},
+      {src: "assets/img/dogs/thumper-surf.jpg",         alt: "Thumper riding a surfboard"}
+    ],
+    line: "A Christmas stash of their favourite treats!"
+  }
+};
+
 /* ==========================================================================
    BONUS — who is Santa?, then Lach & Eleanor's trip to the Philippines
    `reveal` is the opening question: Santa and Mrs Claus stand in shadow and
@@ -242,7 +284,9 @@ const people = [
    `credit` is the "brought to you by" slide that follows; the slideshow music
    (see `music` at the top of this file) starts there and plays through the photos.
    Then one slide per photo, in the order listed: the "Lach Flexing" set first,
-   then the rest. To caption a photo, add `caption` to its line:
+   then the rest. Each photo arrives with its own entrance while the last two slide
+   aside, and the deck moves on by itself every `autoplay` seconds until the last
+   photo, where it waits (0 turns that off; P pauses). To caption a photo, add `caption` to its line:
    {src:"assets/img/trip/flex-01.jpg", caption:"Day one"}
    `outro` is written on the last photo. `stop` is the photo and wording that halt
    the slideshow, and `popQuiz` is the question on the slide after it (same shape
@@ -256,6 +300,7 @@ const trip = {
   },
   credit: {lead: "This quiz was brought to you by", names: "Lach &amp; Eleanor"},
   outro: {title: "Fakemas", line: "brought to you by Lach &amp; Eleanor"},
+  autoplay: 5,
   stop: {
     src: "assets/img/stop-sign.jpg", alt: "Lach holding up a stop sign",
     title: "Stop right there!",
@@ -266,6 +311,7 @@ const trip = {
     q: "How many dogs were in the photo with Lachie on the beach?",
     a: "3 dogs — 2 puppies and Lach, because he's got that dawg in him.",
     icon: "", long: true,
+    sound: {enter: "howl", reveal: "bark"},
     media: {src: "assets/img/trip/flex-07.jpg", alt: "Lach kneeling on the beach with two puppies"}
   },
   photos: [
