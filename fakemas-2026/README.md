@@ -1,6 +1,6 @@
 # Fakemas — The Ross Family Christmas Quiz
 
-**Live: <https://lucho-git.github.io/fakemas/fakemas-2026/>**
+**Live: <https://luchodore.com/fakemas-2026/>**
 
 A self-contained, static slide deck for the Fakemas event. It is one event on
 the site: the home page one folder up links to it, and every path below is
@@ -33,7 +33,7 @@ assets/audio/local/       optional: your own audio files — not in git, never p
 ## Run it
 
 The deck is published with GitHub Pages from the `main` branch root, so every
-push to `main` redeploys <https://lucho-git.github.io/fakemas/fakemas-2026/> in about a minute.
+push to `main` redeploys <https://luchodore.com/fakemas-2026/> in about a minute.
 
 To run it locally (and preview changes before pushing), open `index.html`
 directly in a browser, or serve the folder:

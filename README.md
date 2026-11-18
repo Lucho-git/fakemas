@@ -3,7 +3,7 @@
 A static site of events. The home page shows one cover per event; clicking a
 cover opens that event. No build step.
 
-**Live: <https://lucho-git.github.io/fakemas/>**
+**Live: <https://luchodore.com/>**
 
 ```
 index.html          the home page: one cover per event
@@ -23,4 +23,10 @@ fakemas-2026/       Fakemas 2026, the Ross family Christmas quiz (see its README
 ## Preview and publish
 
 Run `python -m http.server 8123` in this folder and open
-<http://localhost:8123>. Pushing to `main` publishes the site.
+<http://localhost:8123>.
+
+Pushing to `main` publishes the site. Cloudflare builds it from this repository
+(the `fakemas` project under Workers & Pages) and serves it at luchodore.com;
+`wrangler.jsonc` tells it to serve the folder as static files and
+`.assetsignore` lists what to leave out. GitHub Pages still serves a copy at
+<https://lucho-git.github.io/fakemas/>.
