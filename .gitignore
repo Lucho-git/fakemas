@@ -13,3 +13,7 @@ Desktop.ini
 # Local preview & logs
 *.log
 .tmp/
+
+# Your own (bought) music: plays locally, never published
+assets/audio/local/*
+!assets/audio/local/.gitkeep

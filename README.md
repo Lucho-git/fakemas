@@ -10,14 +10,18 @@ dependencies (fonts load from Google Fonts, everything else is local).
 ```
 index.html               markup skeleton — nav, deck container, script tags
 assets/css/styles.css    all styling
-assets/js/content.js      questions, riddles, people, trip, event  ← edit this
+assets/js/content.js      questions, riddles, players, people, trip  ← edit this
 assets/js/slides.js       slide builders & running order
-assets/js/app.js          navigation, reveals, keyboard/swipe, snowfall, jingle
+assets/js/app.js          navigation, timeline, scoreboard, reveals, snowfall, jingle
 assets/img/               photos (standalone media)
 assets/img/trip/          the Philippines bonus slideshow
 assets/img/movies/        "guess the movie scene" stills
+assets/img/people/        photos for the family quiz answers
+assets/img/birds/         the bird round
 assets/video/             video clips
 assets/audio/jingle.mp3   background jingle (loops)
+assets/audio/trip.mp3     stand-in music for the Philippines slideshow
+assets/audio/local/       your own songs — not in git, never published
 ```
 
 ## Run it
@@ -38,82 +42,219 @@ then visit <http://127.0.0.1:8123/>.
 
 Everything you normally want to change is in [content.js](assets/js/content.js):
 
-- `EVENT` — teaser name and date shown on the opening slide.
+- `players` — the names on the scoreboard (see below).
 - `quiz` — Part 1, the family questions (12 of them).
-- `trivia` — Part 2, general Christmas trivia (16 of them). Same shape as
-  `quiz`, so `long:true` shrinks wordy answers and `media` still works.
+- `trivia` — Part 2, general Christmas trivia. Same shape as `quiz`, so
+  `long:true` shrinks wordy answers and `media` still works. Some have
+  multiple-choice options (see below).
 - `riddles` — Part 4. `lines` are printed one per line; `ask` is optional.
-- `people` — Part 6 cards. `v` is `"naughty"` or `"nice"`.
-- `movieScenes` — Part 5, the "guess the movie scene" game (see below).
-- `trip` — the bonus section, the Philippines slideshow (see below).
+- `movieScenes` — Part 5, guess the movie scene, then a question on that film
+  (see below).
+- `birds` — the surprise bird round after the movies (see below).
+- `codeWords` — Part 6, the "Santa's Code Words" clue game (see below).
+- `people` — Part 7 cards. `v` is `"naughty"` or `"nice"`.
+- `trip` — the bonus section after the riddles: "who is Santa?", then the
+  Philippines slideshow (see below).
 
-If you add or remove questions, update the matching ribbon in
-[slides.js](assets/js/slides.js) ("12 Questions…" / "16 Questions…") — slide
-numbers look after themselves.
+Add or remove questions freely: the "12 Questions…" ribbons and the slide
+numbers count themselves.
+
+The deck opens straight on Part 1 — there is no cover or overview slide.
+
+## Multiple choice
+
+Any question (family quiz, trivia or a movie question) can offer choices. Add
+`options` and `correct` to it in [content.js](assets/js/content.js):
+
+```js
+{ q: "Which country sends London the giant Christmas tree for Trafalgar Square each year?",
+  a: "Norway.", icon: "🌲",
+  options: ["Sweden", "Canada", "Germany", "Norway"], correct: "Norway" }
+```
+
+The options are lettered A–D under the question. On reveal the `correct` one
+turns green, the others fade, and the answer banner leads with that option's
+letter ("B: Dad.") so the two always agree. `correct`
+must be spelt exactly as its option. Leave `correct` off and no option is
+marked — useful when the "answer" is an argument (Jev and Ella's first date).
 
 ## Guess the Movie Scene
 
-Part 5 is a seven-scene film round. Each picture is a still from a Christmas
-movie, the slide asks *"Which Christmas movie is this from?"*, and `Space`
-reveals the title. The list lives in `movieScenes` in
-[content.js](assets/js/content.js):
+Part 5 is a seven-film round with two slides per film:
+
+1. **The scene** — a still, *"Which Christmas movie is this from?"*, and `Space`
+   reveals the title.
+2. **The question** — one question about that film, on the next slide, so nobody
+   sees the film's name or its question until the scene has been guessed.
+
+Both live in `movieScenes` in [content.js](assets/js/content.js):
 
 ```js
 const movieScenes = [
-  { file: "bad-santa.jpg", title: "Bad Santa" },
+  { file: "die-hard.jpg", title: "Die Hard",
+    q: "What is the name of the tower John McClane is trapped in?",
+    a: "Nakatomi Plaza.", icon: "🏢" },
   ...
 ];
 ```
 
-`file` is relative to `assets/img/movies/`, `title` is what gets revealed. To
-add or swap a scene, drop the image in that folder and add a line — the
+`file` is relative to `assets/img/movies/` and `title` is what gets revealed.
+`q`, `a` and `icon` make the follow-up question; leave `q` off a scene to skip
+it. Add `options` and `correct` to make it multiple choice (most of them are). To add or swap a film, drop the image in that folder and add a line — the
 "Scene 1 of 7" counter and slide count update themselves.
 
 Image `alt` text is deliberately generic ("Christmas movie scene 3") so screen
 readers don't spoil the answer.
 
-## The Philippines bonus section
+## Do You Know Your Birds?
 
-The bonus section is the "Lach & Eleanor's Trip to the Philippines" interlude. It lives in
-`trip` inside [content.js](assets/js/content.js):
+The surprise round after the movies, set in `birds` in
+[content.js](assets/js/content.js). It has two slides:
+
+1. **The opener** — `opener`, an ordinary question with its photo on show from
+   the start ("What kind of bird is this?").
+2. **The matching game** — `match`, a list of `{ name, src }`. Each name gets a
+   letter in list order (A, B, C…) and the photos are dealt out shuffled above
+   them, numbered 1, 2, 3… so players can write their answers down as
+   "3 = C". The host can also drag a photo onto a name; dropping onto a taken
+   name swaps the two, and dragging back to the tray takes it off. On a touch
+   screen, tap a photo and then tap where it goes.
+
+`Space` shows the answers: every photo moves to its correct name, still wearing
+its number, so the key reads straight off the screen. Any photo that had been
+dragged into place also gets a ✓ or ✗.
+Photos are in `assets/img/birds/`, cropped to 4:3.
+
+## Santa's Code Words
+
+Part 6 is a three-round clue game. Each round shows one clue word, a number,
+and a 4 × 4 board of 16 words; the number is how many words on the board link to the
+clue. The rounds live in `codeWords` in [content.js](assets/js/content.js):
+
+```js
+const codeWords = [
+  { clue: "Stocking",
+    hits: ["COAL", "SHELF", "LEG"],          // the answers
+    why:  "<b>Coal</b> in a naughty one · …",   // one line, shown once they're all found
+    words: [ "TINSEL", "PIANO", "COAL", … ] }, // the whole board, in reading order
+  ...
+];
+```
+
+- `hits` must be spelt exactly as they appear in `words`. The number beside the
+  clue is just `hits.length`, so it updates itself.
+- Boards are 16 words, four across on every screen. Keep the count a multiple
+  of four for a tidy grid.
+- Some of the wrong words are deliberate traps (`GLOVE`, `MOOSE`, `KING`…).
+  When swapping words in, check a new one doesn't accidentally fit the clue.
+
+To play: someone calls a word and the presenter clicks its card — it turns
+green if it's an answer, grey if not. `Space` turns over the remaining answers
+one at a time, then shows the explanation, then moves on.
+
+## The bonus section: who is Santa?
+
+The bonus section comes straight after the riddles and before the movie round.
+It runs in four beats, all set in `trip` inside
+[content.js](assets/js/content.js):
+
+1. **The question** — `reveal.question`, with Santa and Mrs Claus drawn as two
+   shadowy figures. On reveal they dissolve into `reveal.photo` and the banner
+   shows `reveal.answer`.
+2. **The credit** — "This quiz was brought to you by" (`credit.lead`) and
+   `credit.names`. The slideshow music starts here.
+3. **The photos** — one slide per photo and nothing else: no captions,
+   commentary or interjection slides. The last photo carries the sign-off from
+   `outro` ("Fakemas — brought to you by Lach & Eleanor") on its polaroid.
+4. **The pop quiz** — first `stop`: a photo of Lach holding up a stop sign slams
+   in beside "Stop right there!", the line under it and the "worth triple
+   points" banner (`title`, `line`, `kicker`). Then `popQuiz`, the question
+   itself, on the next slide. Its `media` photo appears with the answer.
+   Delete `stop` or `popQuiz` to drop either slide.
 
 ```js
 const trip = {
-  kicker, title, blurb,      // divider slide text
-  intro: [ ... ],            // bullet lines on the "why are we showing you this" slide
+  reveal: { question: "What are Santa Claus and Mrs Claus's real identities?",
+            answer: "Lachie and Eleanor!",
+            photo: "assets/img/trip/trip-01.jpg" },
+  credit: { lead: "This quiz was brought to you by", names: "Lach &amp; Eleanor" },
+  outro: { title: "Fakemas", line: "brought to you by Lach &amp; Eleanor" },
+  stop: { src: "assets/img/stop-sign.jpg", title: "Stop right there!",
+          line: "…", kicker: "Pop quiz — worth triple points" },
+  popQuiz: { q: "…", a: "…", media: { src: "assets/img/trip/flex-07.jpg" } },
   photos: [
-    { src: "assets/img/trip/trip-01.jpg", caption: "Photo 01 — caption placeholder" },
-    ...
-  ],
-  interjections: [
-    { after: 3, by: "Lach", text: "Interjection placeholder — …" },
+    { src: "assets/img/trip/flex-01.jpg" },
     ...
   ]
 };
 ```
 
-- Photos run in list order; each gets its own slide with a polaroid frame and
-  the slide counter `01 / 29`.
-- `after: N` drops an interjection slide in **after photo N** — that's where the
-  random commentary goes.
-- Captions, intro lines and interjections are all placeholders; replace the text
-  between the quotes. The section is styled teal/sand rather than Christmas red,
-  which is why it isn't pretending to be festive.
+- Photos run in list order; each gets a polaroid frame and the counter
+  `01 / 29`. Reorder the lines to reorder the slideshow.
+- The current order is `flex-01…flex-14` (the "Lach Flexing" set, in the order
+  of that folder) and then the couple set as
+  `trip-01, 06, 07, 03, 04, 05, 08, 02, 09, 10, 11, 12, 13, 14, 15`.
+- To caption a photo, add `caption: "…"` to its line. Captioned photos are shown
+  slightly smaller to make room.
+- `reveal.photo` works best as a landscape photo with both faces near the
+  middle; it is cropped to a 4:3 frame.
 
-The current photos are `trip-01…trip-15` (the main set) then `flex-01…flex-14`
-(the "Lach Flexing" set), both in alphabetical order of the original filenames.
+## Scoreboard
+
+The 🏆 **Scores** button (or the `S` key) opens a tally for everyone listed in
+`players` in [content.js](assets/js/content.js). `+` and `−` change a score,
+the leader gets a crown, and `Esc` or `✕` closes it. Scores can go negative.
+
+**Teams:** drag one card onto another (mouse or touch) and the two become a
+team with a single score — their scores so far are added together. Drag more
+cards on to grow the team. **Split** on a team card breaks it back up, and each
+member leaves with the team's score.
+
+Tallies and teams are saved in the browser (`localStorage`), so a reload or a
+jump along the timeline doesn't lose them — but they belong to that browser on
+that computer. **Reset** needs two clicks and zeroes the scores; teams stay as
+they are. The "Final Scores" slide just before the thank-you slide shows the
+same tallies ranked, and updates live.
 
 ## Music
 
-`assets/audio/jingle.mp3` is a 30-second synth loop of *Jingle Bells* (a
-public-domain tune) generated for this deck, so there are no licensing strings
-attached. It starts on the first click or keypress — browsers block audio until
-the presenter interacts — and loops for the whole presentation. The `♪` button
-in the bar mutes and unmutes it.
+Music is set in `music` at the top of [content.js](assets/js/content.js):
 
-To use your own track, replace `assets/audio/jingle.mp3` (keep the name) or
-point the `<audio>` element in [index.html](index.html) at another file. Volume
-is set in [app.js](assets/js/app.js) (`jingleEl.volume = 0.4`).
+```js
+const music = {
+  playlist:  [{ title: "A Nonsense Christmas — Sabrina Carpenter",
+                file:  "assets/audio/local/a-nonsense-christmas.mp3" },
+              ...
+              { title: "Jingle Bells (synth stand-in)", file: "assets/audio/jingle.mp3" }],
+  slideshow: [{ title: "Bebot — Black Eyed Peas", file: "assets/audio/local/bebot.mp3" },
+              { title: "Slideshow loop (synth stand-in)", file: "assets/audio/trip.mp3" }]
+};
+```
+
+- **`playlist`** is the background music for the whole deck. The songs play in
+  a shuffled order and none repeats until every one has had a turn.
+- **`slideshow`** takes over on the "brought to you by" slide, plays through
+  the photos and the pop quiz, and hands back when the movie round starts.
+
+**Your own songs go in `assets/audio/local/`**, saved under exactly the file
+names listed. Bought songs are not part of this project, and that folder is in
+`.gitignore`, so they play on the computer you present from but are never
+pushed to the public website. A file that is missing is skipped. If none are
+there, the two generated stand-ins play instead: `jingle.mp3` (30 seconds of
+*Jingle Bells*) and `trip.mp3` (a 37-second tropical-house style loop), both
+synthesised for this deck with no licensing strings. That is also what the
+live website plays.
+
+Music starts on the first click or keypress — browsers block audio until the
+presenter interacts.
+
+**The ♪ menu.** Clicking ♪ opens a small menu: which list is playing
+(background or slideshow), the song that is on now, a button for every song
+that is actually there (click one to switch to it), and a mute switch. `M`
+mutes and unmutes without opening it; `Esc` closes it. `title` is the name each
+song is shown under. Any
+slide with `data-music="trip"` uses the slideshow list. Volumes are the last
+argument of the two `makeChannel(...)` lines in [app.js](assets/js/app.js).
 
 ## Adding photos & video
 
@@ -142,6 +283,48 @@ hidden rather than showing a broken-image icon.
 Videos autoplay nothing — the presenter taps play. Keep clips short (5–15 s)
 and 720p or smaller so they load quickly.
 
+### Photos that arrive with the answer (`fx`)
+
+For a bit of old-PowerPoint drama, give a question `fx` instead of relying on
+its emoji:
+
+```js
+{ q: "Who whinges the most if a family member isn't present for Christmas?",
+  a: "Two star Tommy.", icon: "😭⭐⭐",
+  fx: { photos: [{ src: "assets/img/two-star-tommy.jpg", alt: "Tom" }],
+        effect: "spin", stars: 2, outOf: 5 } }
+```
+
+| Key | What it does |
+| --- | --- |
+| `photos` | One or more pictures, each `"path"` or `{ src, alt }`. A file that is missing is simply left out. |
+| `effect` | `"spin"` (whirls in — the default), `"bounce"` (drops and bounces), `"fly"` (shoots in from the side), `"swivel"` (spins like a coin), `"creep"` (rises out of the gloom) or `"ambush"` (see below). |
+| `intruder` | For `"ambush"` only: the picture that springs out, as `{ src, alt }`. |
+| `shape` | `"portrait"` for tall rounded frames. Otherwise photos are circles, so use a square image centred on the face. |
+| `shadow` | `true` draws a hooded mystery figure instead of a photo. |
+| `stars` / `outOf` | Gold stars pop in after the photo; `outOf` adds hollow ones up to that total (2 out of 5). |
+| `caption` | A line of small print that fades in underneath. |
+
+With several photos, `spin` brings them in from the left, top and right, and
+`fly` from the left then the right. `ambush` takes exactly two photos of the
+same person: the first pops in calm, the `intruder` springs out beside it, and
+the second photo then takes over and shakes (Jev and the ferret). Timings are in the "fx" block of
+[styles.css](assets/css/styles.css). People photos live in `assets/img/people/`.
+
+### Votes
+
+Give a family-quiz entry `choices` instead of an answer and it becomes a vote
+with no right answer ("Style Selection: who wore it best?"): the photos sit side
+by side, lettered and named, and clicking one crowns it. ↺ clears the crown.
+
+```js
+{ q: "Style Selection: who wore it best?",
+  choices: [{ name: "Lach", src: "assets/img/people/sunnies-lach.jpg" }, ...] }
+```
+
+A question can also carry a `photo` (shown from the start, unlike `media`, which
+waits for the answer) and a `kicker` (a banner above the question).
+
 ## Controls
 
 | Action | Keys |
@@ -150,17 +333,50 @@ and 720p or smaller so they load quickly.
 | Reveal answer, then advance | `Space` / `Enter` |
 | First / last slide | `Home` / `End` |
 | Fullscreen | `F` or the button |
+| Scoreboard | `S` or the 🏆 button (`Esc` closes it) |
+| Music menu / mute | the ♪ button / `M` |
+| Reset this slide | `R` or the ↺ button |
+| Reset every slide | `Shift`+`R` or `Shift`-click ↺ |
 | Advance | swipe left/right on touch |
 
 The current slide number is kept in the URL (`index.html#12`), so you can
 bookmark or reload a slide.
+
+## Resetting
+
+↺ (or `R`) puts the current slide back to how it started: answers hidden
+again, Code Words cards face down, naughty-or-nice stamps cleared, bird photos
+back in the tray. Hold `Shift` to do it for every slide at once — handy after a
+rehearsal. Scores are not touched; the scoreboard has its own Reset.
+
+## Section timeline
+
+The strip above the Back/Next buttons has one button per section. Click one to
+jump straight to that section's first slide. Sections already finished are
+red, the current one is gold, and the thin line along the bottom of each shows
+how far through it you are. Below 1000px wide the labels drop away and only
+the icons show.
+
+The sections are declared in [slides.js](assets/js/slides.js) with
+`section("Label", "🎁")`, called just before that section's first slide is
+pushed. Add, rename or remove a `section(...)` line and the timeline follows.
 
 ## Adding or reordering slides
 
 Slides are built in [slides.js](assets/js/slides.js) into the `slides` array —
 order in the file is order on screen. Helpers:
 
+- `section("Label", "🎁")` — starts a new entry on the bottom timeline.
 - `part(1, "Title", "🎄")` — a part divider.
 - `mystery("Reveal answer", "🎁")` + `<div class="rv" data-rv>…</div>` — the
   click-to-reveal pair.
 - `media({ … })` — photo or video block.
+- `kicker: "…"` on any question adds a banner above it ("Worth triple points").
+- `data-card` on an element makes it turn over on click *and* on `Space` (in
+  page order); `data-flip` makes it turn over on click only.
+
+## Photo credits
+
+- Ferret (`assets/img/ferret.jpg`): cropped from "Mustela putorius furo
+  profile" by Aurélien Mora, via Wikimedia Commons, licensed
+  [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
