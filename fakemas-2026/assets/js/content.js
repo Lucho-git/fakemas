@@ -57,7 +57,10 @@ const sfx = {
   grumble: "assets/audio/sfx/grumble.mp3",
   howl:    "assets/audio/sfx/wolf-howl.mp3",
   bark:    "assets/audio/sfx/dog-bark.mp3",
-  screech: "assets/audio/sfx/record-scratch.mp3"
+  screech: "assets/audio/sfx/record-scratch.mp3",
+  // played as a naughty-or-nice card is stamped: the clip named after the verdict
+  naughty: "assets/audio/sfx/stamp-naughty.mp3",
+  nice:    "assets/audio/sfx/stamp-nice.mp3"
 };
 
 /* Part 1 — family quiz.

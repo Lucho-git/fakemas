@@ -1406,6 +1406,38 @@ body{
   .spot-ring,.spot-bird b{opacity:1}
 }
 
+/* ============ naughty or nice: the rubber stamp ============ */
+/* A rubber stamp drops onto the card's corner, thumps it and lifts away, leaving the
+   verdict in ink. The photo and the reason follow once it has landed. */
+.stamper{position:absolute;z-index:5;right:clamp(2px,1vw,14px);bottom:calc(100% - clamp(14px,2.4vh,22px));width:clamp(40px,4.8vw,70px);
+  opacity:0;pointer-events:none;transform-origin:50% 100%;filter:drop-shadow(0 10px 10px rgba(0,0,0,.45))}
+.stamper .pad{fill:#c3151f}
+.nice-c .stamper .pad{fill:#1f7a3f}
+.nn.on .stamper{animation:stamper-hit .85s cubic-bezier(.3,.1,.3,1) both}
+@keyframes stamper-hit{
+  0%{opacity:0;transform:translateY(-150%) rotate(-14deg)}
+  12%{opacity:1}
+  28%{opacity:1;transform:translateY(0) rotate(9deg) scale(1.04,.84)}
+  44%{opacity:1;transform:translateY(0) rotate(9deg) scale(1,1)}
+  100%{opacity:0;transform:translateY(-130%) rotate(20deg)}}
+/* the ink appears as the stamp lands, with a ring of it spreading out */
+.nn .stamp{transition:none}
+.nn.on .stamp{animation:stamp-ink .32s cubic-bezier(.2,1.6,.4,1) .24s both}
+@keyframes stamp-ink{0%{opacity:0;transform:scale(1.7) rotate(9deg)}100%{opacity:1;transform:scale(1) rotate(9deg)}}
+.nn .stamp::after{content:"";position:absolute;inset:-6px;border-radius:10px;border:3px solid currentColor;opacity:0}
+.nn.on .stamp::after{animation:stamp-splat .55s ease-out .24s both}
+@keyframes stamp-splat{0%{opacity:.9;transform:scale(.8)}100%{opacity:0;transform:scale(2.1)}}
+/* the card takes the blow */
+.nn.on{animation:nn-thump .38s ease-out .24s}
+@keyframes nn-thump{0%{transform:translateY(7px) rotate(1.4deg) scale(.97)}45%{transform:translateY(-3px) rotate(-.8deg)}100%{transform:none}}
+.nn.on .sil img{transition-delay:.5s}
+.nn.on .why{transition-delay:.62s}
+@media(max-width:640px){.stamper{display:none}}
+@media(prefers-reduced-motion:reduce){
+  .nn.on .stamper,.nn.on .stamp::after,.nn.on{animation:none}
+  .nn.on .stamp{animation:none;opacity:1;transform:scale(1) rotate(9deg)}
+}
+
 /* jingle toggle */
 #bar #jingle,#bar #reset{min-width:2.9em;padding:.5em .65em;font-size:1rem}
 /* five controls have to share a phone-width bar */

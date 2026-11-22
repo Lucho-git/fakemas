@@ -1245,17 +1245,23 @@ const FLIPPABLE = "[data-card], [data-flip]";
 const isUnflipped = (t) =>
   t instanceof Element && t.matches(FLIPPABLE) && !t.classList.contains("on");
 
+// Turning a card over by hand plays its sound, as Space does through revealNext.
+function flipOn(card) {
+  if (card.classList.contains("on")) return;
+  card.classList.add("on");
+  if (card.dataset.sfx) playSfx(card.dataset.sfx);
+}
 deck.addEventListener("click", (e) => {
   if (e.target.closest("[data-reveal]")) return revealNext();
   const card = e.target.closest(FLIPPABLE);
-  if (card) card.classList.add("on");
+  if (card) flipOn(card);
 });
 
 deck.addEventListener("keydown", (e) => {
   if ((e.key === "Enter" || e.key === " ") && isUnflipped(e.target)) {
     e.preventDefault();
     e.stopPropagation();
-    e.target.classList.add("on");
+    flipOn(e.target);
   }
 });
 

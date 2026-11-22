@@ -248,7 +248,9 @@ sound: { enter: "howl", reveal: "bark" }   // `enter` starts when the slide arri
                                            // and stops at the reveal
 ```
 
-Two Star Tommy grumbles; the pop quiz howls and barks. The music dips while a
+Two Star Tommy grumbles; the pop quiz howls and barks; a record screeches
+before the code-words round; and each naughty-or-nice card is hit by a rubber
+stamp with a thud, then a sad slide down (naughty) or a rising chime (nice). The music dips while a
 clip plays, and muting the music (`M`) silences the effects too. To swap a
 sound, replace its file or point its name at another one.
 
@@ -488,6 +490,8 @@ order in the file is order on screen. Helpers:
 - Dog bark (`assets/audio/sfx/dog-bark.mp3`): "Barking of a dog" by Amada44, via
   Wikimedia Commons, played twice over, licensed
   [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+- Stamp sounds (`assets/audio/sfx/stamp-naughty.mp3`, `stamp-nice.mp3`): made on
+  this computer from plain tones: a thud, then a sad slide down or a rising chime.
 - Record scratch (`assets/audio/sfx/record-scratch.mp3`): made on this computer
   from the stand-in jingle, played backwards and sped up.
 - Grumble (`assets/audio/sfx/grumble.mp3`): generated on this computer with the

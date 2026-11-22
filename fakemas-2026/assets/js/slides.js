@@ -322,6 +322,16 @@ const SHADOW_FIGURES = `
         <text x="316" y="236">?</text>
       </svg>`;
 
+/* The rubber stamp that comes down on a naughty-or-nice card: a wooden handle on a pad,
+   which takes the verdict's colour ("naughty or nice: the rubber stamp" in styles.css). */
+const RUBBER_STAMP = `<svg class="stamper" viewBox="0 0 60 84" aria-hidden="true">
+        <ellipse cx="30" cy="14" rx="15" ry="13" fill="#8a5424"/>
+        <ellipse cx="25" cy="9" rx="5" ry="3" fill="#c98a4a" opacity=".7"/>
+        <rect x="24" y="22" width="12" height="32" rx="4" fill="#7a4a1c"/>
+        <path d="M8 52h44l5 17H3z" fill="#3b2a1a"/>
+        <rect class="pad" x="1" y="69" width="58" height="13" rx="3"/>
+      </svg>`;
+
 /* The dogs' gift: the main photo in the middle, the others fanned out either side of it. */
 const pupPhotos = (g) => {
   const pup = (p, k, cls = "") =>
@@ -589,12 +599,13 @@ function buildSlides() {
   <div class="ribbon">Stamp each member of the party!</div>
   <div class="nn-grid">
     ${people.map((p) => `
-    <div class="nn ${p.v === "naughty" ? "naughty-c" : "nice-c"}" data-card tabindex="0" role="button" aria-label="${esc(p.n)}">
+    <div class="nn ${p.v === "naughty" ? "naughty-c" : "nice-c"}" data-card data-sfx="${p.v}" tabindex="0" role="button" aria-label="${esc(p.n)}">
       <div class="sil${p.photo ? " has-photo" : ""}"><span>${p.i}</span>${p.photo
         ? `<img src="${esc(p.photo)}" alt="" onerror="this.parentNode.classList.remove('has-photo');this.remove()">` : ""}</div>
       <div class="nm">${p.n}${p.d ? `<small>${p.d}</small>` : ""}</div>
       <div class="why">${p.why ? `${p.why}${p.tag ? `<small>(${p.tag})</small>` : ""}` : ""}</div>
       <div class="stamp ${p.v}">${p.v.toUpperCase()}</div>
+      ${RUBBER_STAMP}
     </div>`).join("")}
   </div>
   <p class="hint">Click a card to stamp it &nbsp;·&nbsp; or press <b>Space</b> to stamp the next one</p>
