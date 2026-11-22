@@ -57,7 +57,16 @@
     box-shadow:0 6px 18px rgba(0,0,0,.5),0 0 22px rgba(233,196,106,.3);transition:transform .25s,box-shadow .25s}
   .event:hover .enter,.event:focus-visible .enter{transform:scale(1.06);box-shadow:0 8px 22px rgba(0,0,0,.55),0 0 34px rgba(233,196,106,.6)}
   /* with more than one event the covers share the row */
-  .events:has(.event + .event) .cover img{max-width:min(88vw,440px);max-height:62vh}
+  .events:has(.event + .event) .cover img{max-width:min(88vw,440px);max-height:56vh}
+
+  /* the words of the day, in a strip under the covers */
+  .words{position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 18px;
+    margin-top:clamp(14px,2.4vh,26px);padding:.7em 1.5em;border-radius:16px;border:1px dashed rgba(233,196,106,.6);background:rgba(0,0,0,.4)}
+  .words h2{margin:0;font-weight:700;font-size:clamp(.72rem,1.4vw,.9rem);letter-spacing:.24em;text-transform:uppercase}
+  .words ul{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:0;padding:0;list-style:none}
+  .words li{padding:.35em 1.1em;border-radius:999px;font-weight:700;font-size:clamp(.8rem,1.6vw,1rem);letter-spacing:.14em;
+    text-transform:uppercase;color:#3a0a0e;background:linear-gradient(180deg,#fbeab7,#e8c677 55%,#c99a3c);border:1px solid #fff3cf}
+  .words p{margin:0;font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:clamp(.82rem,1.5vw,1rem);color:#f3d9a8}
 
   @media(prefers-reduced-motion:reduce){
     body::before,body::after{animation:none}
@@ -75,10 +84,28 @@
     <a class="event" href="fakemas-2026/">
       <span class="cover">
         <img src="home/fakemas-2026.webp" width="1199" height="1312"
-             alt="Fakemas event: Will Santa be naughty or nice?">
+             alt="Fakemas Quiz">
+      </span>
+      <span class="enter">Enter</span>
+    </a>
+    <a class="event" href="stealing-santa/">
+      <span class="cover">
+        <img src="home/stealing-santa.webp" width="1199" height="1312"
+             alt="Stealing Santa: the gift-stealing game">
       </span>
       <span class="enter">Enter</span>
     </a>
   </main>
+
+  <!-- The house rule for the whole day, whichever game is on. -->
+  <aside class="words" aria-label="Words of the day">
+    <h2>Words of the Day</h2>
+    <ul>
+      <li>Christmas</li>
+      <li>Santa</li>
+      <li>Present</li>
+    </ul>
+    <p>Say one, get called out, take a drink.</p>
+  </aside>
 </body>
 </html>

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stealing Santa</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎁</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Playfair+Display:ital,wght@0,500;0,700;1,500;1,700&family=Great+Vibes&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="top">
+  <a class="home" href="../" aria-label="Back to the home page">&lsaquo; Home</a>
+  <h1>Stealing Santa</h1>
+  <nav class="tabs" aria-label="Sections">
+    <button type="button" class="tab" data-view="rules">Rules</button>
+    <button type="button" class="tab" data-view="players">Players</button>
+    <button type="button" class="tab" data-view="game">Order &amp; Die</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ============ the rules (this is also what prints) ============ -->
+  <section class="view" id="rules">
+    <div class="sheet">
+      <h2 class="script">The Rules</h2>
+      <p class="lede">8 gifts &middot; 8 people &middot; 2 steals &middot; 1 die</p>
+      <ol class="rules">
+        <li>Put the eight wrapped gifts in the middle. Everyone draws a number from 1 to 8.</li>
+        <li>Number 1 goes first and opens any wrapped gift.</li>
+        <li>On your turn, <b>open</b> a wrapped gift or <b>steal</b> a gift that someone else has already opened.</li>
+        <li>To steal, roll the die. <b>3, 4 or 5</b>: the gift is yours. <b>6</b>: it is yours and <b>locked</b>, so nobody can take it. <b>1 or 2</b>: the steal fails and you open a wrapped gift instead.</li>
+        <li>If your gift is stolen, you go again straight away: steal a different gift (same roll) or open a wrapped one.</li>
+        <li>A gift can change hands only once per turn, so nobody can snatch theirs straight back.</li>
+        <li>A gift can be stolen <b>twice</b>. After the second steal it is <b>locked</b> too, and stays where it is.</li>
+        <li>A turn ends when a wrapped gift is opened; then the next number plays. The game is over when all eight are open.</li>
+      </ol>
+
+      <div class="sheet-btns">
+        <button type="button" class="btn ghost" id="print">Print the rules</button>
+        <button type="button" class="btn" data-view="players">Pick the players</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ names and numbers ============ -->
+  <section class="view" id="players" hidden>
+    <div class="sheet">
+      <h2 class="script">The Players</h2>
+      <p class="lede" id="players-hint">Type the eight names, then draw the numbers.</p>
+      <ol class="roster" id="roster"></ol>
+      <div class="sheet-btns">
+        <button type="button" class="btn ghost" id="draw">Draw the numbers</button>
+        <button type="button" class="btn" id="to-game" data-view="game" disabled>See the order</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ the order and the die ============ -->
+  <section class="view" id="game" hidden>
+    <div class="board">
+      <div class="panel order">
+        <h2>The Order</h2>
+        <p class="no-order" id="no-order">The numbers have not been drawn yet.
+          <button type="button" class="link" data-view="players">Draw them</button></p>
+        <ol id="order"></ol>
+      </div>
+      <div class="panel dice-card">
+        <h2>The Die</h2>
+        <div class="die" id="die" data-face="5" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <p class="dice-rule">3 or higher steals &middot; a 6 locks it</p>
+        <p class="dice-result" id="dice-result" aria-live="assertive"></p>
+        <button type="button" class="btn" id="roll">Roll the die</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="game.js"></script>
+</body>
+</html>

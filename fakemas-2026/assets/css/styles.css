@@ -1039,6 +1039,25 @@ body{
 #yt-dock.min:not([data-kind="youtube"]) #yt-min{top:-18px;left:-18px;width:36px;height:36px;font-size:1.15rem;
   box-shadow:0 6px 16px rgba(0,0,0,.6),0 0 14px rgba(233,196,106,.35)}
 
+/* ============ home button ============ */
+/* Bottom left, with the scoreboard button moved along to make room for it. */
+#home-btn{position:fixed;left:18px;bottom:10px;z-index:12;display:inline-flex;align-items:center;justify-content:center;width:96px;
+  font-family:'Cinzel',serif;font-weight:700;font-size:.85rem;line-height:normal;color:var(--gold-l);padding:.4em 0;text-decoration:none;
+  border-radius:24px;border:2px solid var(--gold-d);background:linear-gradient(180deg,#8c0f17,#4e060b)}
+#home-btn:hover{box-shadow:0 0 12px rgba(233,196,106,.4)}
+#home-btn:focus-visible{outline:2px solid var(--gold-l);outline-offset:2px}
+@media(min-width:641px){#scores-btn{left:122px}}
+@media(min-width:641px) and (max-width:1000px){
+  #home-btn{width:40px}
+  #home-btn .hb-lbl{display:none}
+  #scores-btn{left:66px}
+}
+@media(max-width:640px){
+  #home-btn{left:12px;bottom:62px;width:40px;height:34px;padding:0}
+  #home-btn .hb-lbl{display:none}
+  #timeline{left:58px}
+}
+
 /* jingle toggle */
 #bar #jingle,#bar #reset{min-width:2.9em;padding:.5em .65em;font-size:1rem}
 /* five controls have to share a phone-width bar */
