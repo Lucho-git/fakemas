@@ -51,7 +51,9 @@ Everything you normally want to change is in [content.js](assets/js/content.js):
 - `players` — the names on the scoreboard (see below).
 - `quiz` — Part 1, the family questions (13 of them), with an intermission in
   the middle: an entry with `intermission` (its heading) and a `video` is a slide
-  where a silent clip plays by itself on a loop, and it takes no question number.
+  that counts down 3, 2, 1 with hazard tape, flashes and a title slam, then plays
+  the silent clip by itself on a loop. `star` is the billing under the title. It
+  takes no question number.
 - `trivia` — Part 2, general Christmas trivia. Same shape as `quiz`, so
   `long:true` shrinks wordy answers and `media` still works. Some have
   multiple-choice options (see below).
@@ -59,6 +61,8 @@ Everything you normally want to change is in [content.js](assets/js/content.js):
 - `movieScenes` — Part 5, guess the movie scene, then a question on that film
   (see below).
 - `birds` — the surprise bird round after the movies (see below).
+- `codeTeaser` — the "Hold on." slide before Part 6: the music stops with a
+  record screech and the room guesses the game and who is presenting it.
 - `codeWords` — Part 6, the "Santa's Code Words" clue game (see below).
   `codePoster` is the photo on its title slide.
 - `people` — Part 7 cards, dealt in the order listed. `v` is `"naughty"` or
@@ -134,12 +138,16 @@ The surprise round after the movies, set in `birds` in
    letter in list order (A, B, C…) and the photos are dealt out shuffled above
    them, numbered 1, 2, 3… so players can write their answers down as
    "3 = C". The host can also drag a photo onto a name; dropping onto a taken
-   name swaps the two, and dragging back to the tray takes it off. On a touch
-   screen, tap a photo and then tap where it goes.
+   name swaps the two, and dragging back to the tray takes it off. Click a
+   photo (without dragging it) to show it large; any click or key closes it.
 
 `Space` shows the answers: every photo moves to its correct name, still wearing
 its number, so the key reads straight off the screen. Any photo that had been
 dragged into place also gets a ✓ or ✗.
+The round opens on a card (`birds.watch`) that asks who has been watching: birds
+fly across a sky and are each locked onto and tagged "Spotted!" while a pair of
+binoculars scans from the bottom. Take `watch` out to open on the poster.
+
 Photos are in `assets/img/birds/`, cropped to 4:3. `birds.poster` is the photo
 beside the title on the round's opening slide (Dad); delete the line to go
 without one.
@@ -180,8 +188,11 @@ It runs in four beats, all set in `trip` inside
 1. **The question** — `reveal.question`, with Santa and Mrs Claus drawn as two
    shadowy figures. On reveal they dissolve into `reveal.photo` and the banner
    shows `reveal.answer`.
-2. **The credit** — "This quiz was brought to you by" (`credit.lead`) and
-   `credit.names`. The slideshow music starts here.
+2. **The sponsors reel** — "And now / a word from / our sponsors" slams in line
+   by line, then a title card (`sponsor.title`, `sponsor.place`) drops in with a
+   plane and palm trees, and the sponsor's name (`sponsor.by`, `sponsor.name`)
+   slams in with a shine. The slideshow music starts here. Take `sponsor` out of
+   `trip` and the plain "brought to you by" slide (`credit`) is shown instead.
 3. **The photos** — one slide per photo and nothing else: no captions,
    commentary or interjection slides. Each photo arrives with its own entrance
    (spin, drop, fly, zoom, swing, flip, roll) while the one before it slides off
@@ -305,17 +316,24 @@ stay in view, so it cannot be tucked away.
 **Spotify.** `spotify: "TRACK_ID"` is the part after `/track/` in a song's share
 link (Share → Copy song link). Things to know:
 
-- **Sign in first.** Spotify plays whole songs only in a browser that is signed
-  in to Spotify: open <https://open.spotify.com>, sign in, then load the deck in
-  the same browser. Signed out, it plays a 30-second sample of each song, and
-  the ♪ menu says so.
-- Use an ordinary Chrome or Edge window. A private window, or a browser that
-  blocks third-party cookies (Safari, Brave, Firefox on strict), hides the
-  sign-in from the player, so it falls back to samples.
-- If nothing starts after your first click on the deck, press play on the
-  Spotify bar once.
-- Spotify's player has no volume control, so the music does not dip under the
-  sound effects as it does on YouTube.
+- **Connect Spotify for whole songs.** The ♪ menu has a **Connect Spotify**
+  button. It takes you to Spotify's own page to sign in with a Premium account
+  and agree, then brings you back to the slide you were on. From then on the
+  songs play whole, inside the page, with no player on screen, and the music
+  dips under the sound effects. The sign-in is remembered on that browser;
+  **Disconnect** in the same menu forgets it.
+- Connecting works in Chrome or Edge on a computer, and only when the quiz is
+  open at an address registered with the Spotify app: `music.spotifyApp` in
+  `content.js` holds the app's Client ID (made at
+  <https://developer.spotify.com/dashboard>; it is not a secret) and those
+  addresses. While the app is in development mode, only the Spotify accounts
+  listed under its User Management can connect.
+- **Not connected**, the songs play through Spotify's embedded player in the
+  dock instead. That often gives only a 30-second sample of each song, even in a
+  browser that is signed in to Spotify, and it has no volume control. The ♪
+  menu says when it is sampling.
+- If nothing starts after your first click on the deck, click once more: a
+  browser will not let a page make sound until it has been clicked.
 
 **YouTube.** `youtube: "VIDEO_ID"` is the part after `watch?v=` in the video's
 address. YouTube shows the video in the dock, may play an advert first, and a
@@ -470,6 +488,8 @@ order in the file is order on screen. Helpers:
 - Dog bark (`assets/audio/sfx/dog-bark.mp3`): "Barking of a dog" by Amada44, via
   Wikimedia Commons, played twice over, licensed
   [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+- Record scratch (`assets/audio/sfx/record-scratch.mp3`): made on this computer
+  from the stand-in jingle, played backwards and sped up.
 - Grumble (`assets/audio/sfx/grumble.mp3`): generated on this computer with the
   built-in Windows speech voice, then pitched down.
 - Film covers: not stored here; shown from each film's Wikipedia article.

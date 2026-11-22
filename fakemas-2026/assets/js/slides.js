@@ -123,14 +123,113 @@ const questionSlide = (x, badge, cls = "", attrs = "") => `
   </div>
 </section>`;
 
-/* An intermission: a silent clip in a tall frame. app.js plays it, on a loop, for as
-   long as the slide is up. */
+/* An intermission: a silent clip in a tall frame, announced with far too much fuss.
+   The `.hype` layer is the countdown, tape, rings and burst ("hype reel" in styles.css);
+   app.js holds the clip back until that is over, then loops it while the slide is up. */
+const HYPE_BURST = ["🌊", "🏄", "⚡", "🔥", "✨", "💥", "🎉", "🌊", "🏄", "⚡", "🔥", "✨", "💥", "🎉"];
 const intermissionSlide = (x) => `
 <section class="slide interval">
-  <div class="part-no">✦ ${x.intermission} ✦</div>
+  <div class="hype" aria-hidden="true">
+    <div class="hype-rays"></div>
+    <div class="hype-tape top"><span>⚠ ${x.intermission} incoming ⚠</span></div>
+    <div class="hype-tape bottom"><span>⚠ Stand by ⚠</span></div>
+    ${[0, 1, 2, 3].map((n) => `<div class="hype-ring" style="--n:${n}"></div>`).join("")}
+    <div class="hype-count">${[3, 2, 1].map((c, n) => `<b style="--n:${n}">${c}</b>`).join("")}</div>
+    <div class="hype-burst">${HYPE_BURST.map((e, k) =>
+      `<i style="--a:${Math.round(k * 360 / HYPE_BURST.length)}deg;--k:${k}">${e}</i>`).join("")}</div>
+    ${x.star ? `<div class="hype-star">${x.star}</div>` : ""}
+    <div class="hype-flash"></div>
+  </div>
+  <div class="hype-title">${x.intermission}</div>
   <figure class="interval-clip">
-    <video src="${esc(x.video.src)}"${x.video.poster ? ` poster="${esc(x.video.poster)}"` : ""} muted loop playsinline preload="metadata" data-clip></video>
+    <video src="${esc(x.video.src)}"${x.video.poster ? ` poster="${esc(x.video.poster)}"` : ""} muted loop playsinline preload="metadata" data-clip data-clip-delay="5.8"></video>
   </figure>
+</section>`;
+
+/* The bird-watch card that opens the bird round: a sky of birds, each one locked onto and
+   tagged as it crosses, with binoculars scanning from the bottom ("bird-watch card" in
+   styles.css). Each bird is [emoji, height up the slide, seconds to cross, head start in
+   seconds, direction, when it is spotted]. */
+const FLOCK = [
+  ["🦜", 5, 15, 2, 1, ""], ["🦆", 14, 19, 9, -1, "late"], ["🦅", 22, 12, 6, 1, "late"],
+  ["🐦", 9, 22, 15, -1, ""], ["🦉", 66, 17, 4, 1, "late"], ["🦩", 73, 21, 12, -1, ""],
+  ["🕊️", 60, 14, 9, -1, "late"], ["🐧", 78, 24, 18, 1, ""]
+];
+const BINOCULARS = `<svg class="spot-binos" viewBox="0 0 200 150" aria-hidden="true">
+      <defs>
+        <linearGradient id="spot-beam" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0" stop-color="#fff8d0" stop-opacity=".75"/><stop offset="1" stop-color="#fff8d0" stop-opacity="0"/>
+        </linearGradient>
+        <radialGradient id="spot-lens" cx="35%" cy="35%" r="75%">
+          <stop offset="0" stop-color="#bfe9ff"/><stop offset=".6" stop-color="#2d6f9a"/><stop offset="1" stop-color="#0c2a3d"/>
+        </radialGradient>
+      </defs>
+      <path class="beam" d="M30 38L-70-420H180L80 38Z"/>
+      <path class="beam" d="M120 38L20-420H270L170 38Z"/>
+      <rect x="84" y="66" width="32" height="26" rx="7" fill="#22323b"/>
+      <rect x="91" y="54" width="18" height="16" rx="5" fill="#e9c46a" stroke="#8a6320" stroke-width="2"/>
+      <g>
+        <rect x="18" y="36" width="74" height="112" rx="20" fill="#1b2a33" stroke="#0b1217" stroke-width="3"/>
+        <rect x="18" y="96" width="74" height="12" fill="#e9c46a" opacity=".85"/>
+        <ellipse cx="55" cy="40" rx="39" ry="17" fill="#0b1217" stroke="#e9c46a" stroke-width="3"/>
+        <ellipse cx="55" cy="39" rx="30" ry="12" fill="url(#spot-lens)"/>
+        <ellipse class="glint" cx="44" cy="35" rx="9" ry="3.5" fill="#fff"/>
+      </g>
+      <g>
+        <rect x="108" y="36" width="74" height="112" rx="20" fill="#1b2a33" stroke="#0b1217" stroke-width="3"/>
+        <rect x="108" y="96" width="74" height="12" fill="#e9c46a" opacity=".85"/>
+        <ellipse cx="145" cy="40" rx="39" ry="17" fill="#0b1217" stroke="#e9c46a" stroke-width="3"/>
+        <ellipse cx="145" cy="39" rx="30" ry="12" fill="url(#spot-lens)"/>
+        <ellipse class="glint" cx="134" cy="35" rx="9" ry="3.5" fill="#fff"/>
+      </g>
+    </svg>`;
+const birdWatchSlide = (x) => `
+<section class="slide birdwatch">
+  <div class="spot-sky" aria-hidden="true">
+    <div class="spot-cloud" style="top:8vh;animation-delay:-12s"></div>
+    <div class="spot-cloud" style="top:30vh;animation-delay:-38s;opacity:.6"></div>
+    <div class="spot-cloud" style="top:58vh;animation-delay:-52s;opacity:.45"></div>
+    ${FLOCK.map(([bird, top, dur, ahead, dir, when]) => `
+    <div class="spot-bird${dir < 0 ? " rtl" : ""}${when ? ` ${when}` : ""}" style="--top:${top}vh;--dur:${dur}s;--delay:-${ahead}s;--rest:${10 + top}vw">
+      <span class="spot-ring"></span><i>${bird}</i><b>Spotted!</b>
+    </div>`).join("")}
+    ${BINOCULARS}
+  </div>
+  <div class="parch spot-card">
+    <div class="spot-tag">✦ ${x.tag} ✦</div>
+    <h2>${x.title}</h2>
+    <p>${x.q}</p>
+    <div class="ribbon">${x.points}</div>
+  </div>
+</section>`;
+
+/* The sponsors reel that opens the slideshow: an announcement, then a title card and the
+   sponsor's name. It reuses the intermission's `.hype` pieces; its own timings are under
+   "sponsors reel" in styles.css. */
+const burst = (emoji, cls = "") => `<div class="hype-burst${cls}">${emoji.map((e, k) =>
+  `<i style="--a:${Math.round(k * 360 / emoji.length)}deg;--k:${k}">${e}</i>`).join("")}</div>`;
+const sponsorSlide = (x) => `
+<section class="slide trip sponsor" data-music="trip">
+  <div class="hype" aria-hidden="true">
+    <div class="hype-rays"></div>
+    <div class="hype-tape top"><span>★ ${x.lead.join(" ")} ★</span></div>
+    <div class="hype-tape bottom"><span>★ ${x.lead.join(" ")} ★</span></div>
+    <div class="hype-ring" style="--n:2.4"></div>
+    <div class="hype-ring" style="--n:5.4"></div>
+    <div class="sp-lead">${x.lead.map((line, n) => `<b style="--n:${n}">${line}</b>`).join("")}</div>
+    <div class="sp-plane">✈️</div>
+    <div class="sp-palm l">🌴</div>
+    <div class="sp-palm r">🌴</div>
+    ${burst(["🌴", "🥥", "🌊", "☀️", "🍹", "🐠", "🌺", "🌴", "🥥", "🌊", "☀️", "🍹", "🐠", "🌺"])}
+    ${burst(["✨", "⭐", "💫", "✨", "⭐", "💫", "✨", "⭐", "💫", "✨", "⭐", "💫"], " late")}
+    <div class="hype-flash"></div>
+  </div>
+  <div class="sp-card">
+    <div class="trip-title sp-title">${x.title}</div>
+    <div class="sp-place">${x.place}</div>
+    <div class="sp-by">${x.by}</div>
+    <div class="sp-name"><span>${x.name}</span></div>
+  </div>
 </section>`;
 
 /* A vote: named photos side by side, no right answer. Clicking one crowns it (click-only,
@@ -296,8 +395,10 @@ function buildSlides() {
     <p>We won't be telling you what it is. <b>You'll be telling us.</b></p>
     <p class="must-write">Leaving it blank is not an option. You must write something down.</p>
     <div class="writes">
-      <div class="write"><b>Mum's Answer</b><small>(What do you think you did?)</small></div>
-      <div class="write"><b>Dad's Answer</b><small>(What do you think you did?)</small></div>
+      <div class="write"><b>Mum's Answer</b><small>(What do you think you did?)</small>
+        <textarea data-write="mum" aria-label="Mum's answer" placeholder="Type it here…" spellcheck="false"></textarea></div>
+      <div class="write"><b>Dad's Answer</b><small>(What do you think you did?)</small>
+        <textarea data-write="dad" aria-label="Dad's answer" placeholder="Type it here…" spellcheck="false"></textarea></div>
     </div>
   </div>
 </section>`);
@@ -354,7 +455,7 @@ function buildSlides() {
 </section>`);
 
   // From here to the end of the photos the slideshow track plays instead of the jingle.
-  slides.push(`
+  slides.push(trip.sponsor ? sponsorSlide(trip.sponsor) : `
 <section class="slide trip" data-music="trip">
   <div class="trip-tag" style="font-size:clamp(.8rem,1.8vw,1.3rem)">${trip.credit.lead}</div>
   <div class="trip-title" style="font-size:clamp(3.2rem,10vw,7.5rem)">${trip.credit.names}</div>
@@ -440,6 +541,7 @@ function buildSlides() {
 
   // Surprise round – do you know your birds?
   section("Birds", "🐦");
+  if (birds.watch) slides.push(birdWatchSlide(birds.watch));
   slides.push(`
 <section class="slide">
   <div class="poster-row">
@@ -457,6 +559,14 @@ function buildSlides() {
 
   // Part 6 – Santa's Code Words
   section("Code Words", "🕵️");
+  // First the record screeches and the music stops (data-music="none"): what is missing?
+  if (typeof codeTeaser !== "undefined" && codeTeaser) {
+    slides.push(questionSlide({...codeTeaser, q: `<span class="vinyl" aria-hidden="true"></span>
+      <span class="hold">${codeTeaser.hold}</span>
+      <span class="hold-q">${codeTeaser.q}</span>
+      <span class="hold-line">${codeTeaser.line}</span>
+      <span class="hold-points">${codeTeaser.points}</span>`}, "Wait", "screech", ' data-music="none"'));
+  }
   slides.push(`
 <section class="slide">
   <div class="poster-row">

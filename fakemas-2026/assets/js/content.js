@@ -26,6 +26,14 @@ const players = ["Tom", "Vic", "Jev", "Ella", "Mum", "Dad"];
    when nothing above it can (no internet).                                             */
 const music = {
   source: "spotify",
+  // "Connect Spotify" in the ♪ menu signs a Premium listener in and plays whole songs inside
+  // the page. `client` is the Client ID of the app made at developer.spotify.com (it is not
+  // a secret) and `redirects` are the addresses registered there: connecting only works
+  // when the quiz is open at one of them.
+  spotifyApp: {
+    client: "5c9b534ea1084ed9b0bb49804cd3846a",
+    redirects: ["https://luchodore.com/fakemas-2026/", "http://127.0.0.1:8765/fakemas-2026/"]
+  },
   playlist: [
     {title: "A Nonsense Christmas — Sabrina Carpenter",   spotify: "73ye7F9Ub51dQ3CrnCHFhr", youtube: "s_eCNuHS6kk"},
     {title: "Mistletoe — Justin Bieber",                  spotify: "7xapw9Oy21WpfEcib2ErSA", youtube: "LUjn3RpkcKY"},
@@ -48,7 +56,8 @@ const music = {
 const sfx = {
   grumble: "assets/audio/sfx/grumble.mp3",
   howl:    "assets/audio/sfx/wolf-howl.mp3",
-  bark:    "assets/audio/sfx/dog-bark.mp3"
+  bark:    "assets/audio/sfx/dog-bark.mp3",
+  screech: "assets/audio/sfx/record-scratch.mp3"
 };
 
 /* Part 1 — family quiz.
@@ -77,8 +86,9 @@ const sfx = {
    A, B, C…, and clicking one crowns it.
 
    An entry with `intermission` (its heading) and a `video` is not a question: it is a
-   slide where the clip plays by itself, silently, on a loop. It is left out of the
-   question numbering.                                                                  */
+   slide that counts down with a lot of fuss, then plays the clip by itself, silently,
+   on a loop. `star` is the billing that streaks across under the title. It is left out
+   of the question numbering.                                                                  */
 const quiz = [
   {q:"What's the earliest we were allowed to wake Mum and Dad on Christmas Day?", a:"6 am.", icon:"⏳",
    options:["4:30 am", "6 am", "6:15 am", "8 am"], correct:"6 am"},
@@ -94,7 +104,7 @@ const quiz = [
    fx:{photos:[{src:"assets/img/people/ella.jpg", alt:"Ella"}], effect:"bounce"}},
   {q:"Which family would Ella rather spend Christmas with?", a:"Over to you, Ella.", icon:"🚤",
    options:["The Ross family", "The Ellis family <i>(they have a wakesurfing boat)</i>"]},
-  {intermission:"Intermission",
+  {intermission:"Intermission", star:"Starring Lach",
    video:{src:"assets/video/wakesurf.mp4", poster:"assets/video/wakesurf-poster.jpg"}},
   {q:"Who whinges the most if a family member isn't present for Christmas?", a:"Two star Tommy.", icon:"😭⭐⭐",
    sound:{reveal:"grumble"},
@@ -199,6 +209,14 @@ const movieScenes = [
    here (A, B, C…), the photos are dealt out shuffled, and players drag each photo
    onto its name. Space marks them and puts every photo where it belongs. */
 const birds = {
+  // The card before the poster: birds fly past and are spotted while it asks its question.
+  // Take `watch` out to open the round on the poster.
+  watch: {
+    tag: "Bird Watch",
+    title: "Who's Been Watching?",
+    q: "Who's been spotting and tracking new birds this year?",
+    points: "<b>+5</b> points to whoever has the highest Merlin score right now"
+  },
   title: "Do You Know<br>Your Birds?",
   ribbon: "Surprise Birdwatching Enthusiast Questionnaire",
   poster: {src: "assets/img/people/dad-poster.jpg", alt: "Dad"},
@@ -223,6 +241,18 @@ const birds = {
    The number shown beside the clue is just how many `hits` there are.
    `why` is the one-line explanation shown once every answer has been found.
    `codePoster` is the photo on the round's title slide.                        */
+/* The slide before the round's poster: the music stops with a record screech. `hold` is the
+   big word, `q`, `line` and `points` the wording under it, and `a` the answer. Take the
+   whole of `codeTeaser` out to go straight to the poster. */
+const codeTeaser = {
+  hold: "Hold on.",
+  q: "Isn't something missing here?",
+  line: "What kind of Fakemas would it be if we didn't play the most important game?",
+  points: "1 point for guessing the game &middot; 1 more for guessing who's presenting it",
+  a: "Santa's Code Words, presented to you by Ella",
+  icon: "🕵️",
+  sound: {enter: "screech"}
+};
 const codePoster = {src: "assets/img/people/ella-reading.jpg", alt: "Ella reading"};
 const codeWords = [
   {
@@ -306,8 +336,11 @@ const gifts = {
    BONUS — who is Santa?, then Lach & Eleanor's trip to the Philippines
    `reveal` is the opening question: Santa and Mrs Claus stand in shadow and
    `photo` fades in when the answer is revealed.
-   `credit` is the "brought to you by" slide that follows; the slideshow music
-   (see `music` at the top of this file) starts there and plays through the photos.
+   `sponsor` is the reel that follows: "And now a word from our sponsors" (`lead`, one
+   line each), then a title card (`title`, `place`) and who it is presented by (`by`,
+   `name`), all with far too many effects. The slideshow music (see `music` at the top
+   of this file) starts there and plays through the photos. Take `sponsor` out and the
+   plain `credit` slide ("brought to you by") is shown instead.
    Then one slide per photo, in the order listed: the "Lach Flexing" set first,
    then the rest. Each photo arrives with its own entrance while the last two slide
    aside, and the deck moves on by itself every `autoplay` seconds until the last
@@ -322,6 +355,13 @@ const trip = {
     question: "What are Santa Claus and Mrs Claus's real identities?",
     answer: "Lachie and Eleanor!",
     photo: "assets/img/trip/trip-01.jpg"
+  },
+  sponsor: {
+    lead: ["And now", "a word from", "our sponsors"],
+    title: "Lach &amp; Eleanor",
+    place: "in the Philippines",
+    by: "presented to you by",
+    name: "AgSKAN"
   },
   credit: {lead: "This quiz was brought to you by", names: "Lach &amp; Eleanor"},
   outro: {title: "Fakemas", line: "brought to you by Lach &amp; Eleanor"},

@@ -89,24 +89,49 @@ function show(i, updateHash = true) {
   // A slide's arrival sound plays until its answer is revealed.
   stopSfx();
   if (els[cur].dataset.sfxEnter && pending(els[cur]).length) playSfx(els[cur].dataset.sfxEnter);
-  // An intermission clip starts from the top when its slide arrives and stops when it leaves.
+  // An intermission clip stops when its slide leaves. When the slide arrives it starts
+  // from the top, once the slide's hype reel (data-clip-delay, in seconds) has run.
+  clearTimeout(clipTimer);
   deck.querySelectorAll("video[data-clip]").forEach((clip) => {
-    if (!els[cur].contains(clip)) return clip.pause();
+    clip.pause();
+    if (!els[cur].contains(clip)) return;
     clip.currentTime = 0;
-    clip.play().catch(() => {});
+    const wait = CALM.matches ? 0 : Number(clip.dataset.clipDelay || 0) * 1000;
+    clipTimer = setTimeout(() => clip.play().catch(() => {}), wait);
   });
   syncAuto();
 }
+let clipTimer = 0;
+const CALM = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 // A browser will not start a clip in a hidden tab, so try again when the page comes back.
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) els[cur].querySelectorAll("video[data-clip]").forEach((clip) => clip.play().catch(() => {}));
 });
 
-// Puts a slide back to how it was before anything was revealed, flipped, stamped or matched.
+/* ============ TYPED ANSWERS ============ */
+// Text boxes on a slide (data-write) keep what is typed in them on this device.
+const WRITES_KEY = "fakemas-writes";
+let writes = {};
+try { writes = JSON.parse(localStorage.getItem(WRITES_KEY)) || {}; } catch (err) { writes = {}; }
+function saveWrites() {
+  try { localStorage.setItem(WRITES_KEY, JSON.stringify(writes)); } catch (err) { /* private mode */ }
+}
+deck.querySelectorAll("textarea[data-write]").forEach((box) => { box.value = writes[box.dataset.write] || ""; });
+deck.addEventListener("input", (e) => {
+  const key = e.target.dataset && e.target.dataset.write;
+  if (key === undefined) return;
+  writes[key] = e.target.value;
+  saveWrites();
+});
+
+// Puts a slide back to how it was before anything was revealed, flipped, stamped, matched or typed.
 function resetSlide(slide) {
   if (slide === els[cur]) stopSfx();
   slide.querySelectorAll("[data-rv].on, [data-card].on, [data-flip].on").forEach((el) => el.classList.remove("on"));
+  const boxes = slide.querySelectorAll("textarea[data-write]");
+  boxes.forEach((box) => { box.value = ""; delete writes[box.dataset.write]; });
+  if (boxes.length) saveWrites();
   resetMatch(slide);
   syncMystery(slide);
 }
@@ -343,21 +368,34 @@ function resetMatch(slide) {
   if (!tray) return;
   [...slide.querySelectorAll(".mt-tile")]
     .sort((x, y) => Number(x.dataset.order) - Number(y.dataset.order))
-    .forEach((tile) => { tile.classList.remove("picked"); tray.append(tile); });
+    .forEach((tile) => tray.append(tile));
   slide.querySelectorAll(".mt-slot").forEach((slot) => slot.classList.remove("right", "wrong", "drop"));
   slide.classList.remove("graded");
   const status = slide.querySelector("[data-match-status]");
   if (status) status.textContent = status.dataset.matchStatus;
-  pickedTile = null;
 }
 
+// A click on a photo (a press that does not turn into a drag) shows it large, so the room
+// can see it; any click or key puts it away again. Once the answers are out, the large
+// view carries the bird's name as well as its number.
+const zoomEl = document.createElement("div");
+zoomEl.id = "zoom";
+zoomEl.hidden = true;
+zoomEl.innerHTML = `<figure><img alt=""><figcaption></figcaption></figure>`;
+document.body.append(zoomEl);
+function zoomTile(tile) {
+  const num = tile.querySelector(".mt-num");
+  const slot = tile.closest(".graded") && tile.closest(".mt-slot");
+  const name = slot && slot.querySelector(".mt-name span");
+  zoomEl.querySelector("img").src = tile.querySelector("img").src;
+  zoomEl.querySelector("figcaption").innerHTML =
+    `${num ? `<b>${esc(num.textContent)}</b>` : ""}${name ? `<span>${esc(name.textContent)}</span>` : ""}`;
+  zoomEl.hidden = false;
+}
+const closeZoom = () => { zoomEl.hidden = true; };
+zoomEl.addEventListener("click", closeZoom);
+
 let tileDrag = null;
-let pickedTile = null;
-const pickTile = (tile) => {
-  if (pickedTile) pickedTile.classList.remove("picked");
-  pickedTile = tile === pickedTile ? null : tile;
-  if (pickedTile) pickedTile.classList.add("picked");
-};
 const dropZone = (el) => el && el.closest(".mt-slot, [data-tray]");
 
 deck.addEventListener("pointerdown", (e) => {
@@ -389,34 +427,24 @@ function endTileDrag(e, commit) {
   tile.style.transform = "";
   if (over) over.classList.remove("drop");
   if (!commit) return;
-  if (moved) {
-    if (over) placeTile(tile, over);
-    pickTile(null);
-  } else if (pickedTile && pickedTile !== tile && tile.closest(".mt-slot")) {
-    placeTile(pickedTile, tile.closest(".mt-slot")); // tap a second, placed tile: swap with it
-    pickTile(null);
-  } else {
-    pickTile(tile); // a tap picks it up (or puts it down again)
-  }
+  if (!moved) zoomTile(tile);
+  else if (over) placeTile(tile, over);
 }
 deck.addEventListener("pointerup", (e) => endTileDrag(e, true));
 deck.addEventListener("pointercancel", (e) => endTileDrag(e, false));
-// With a tile picked, tapping a name (or the tray) puts it there.
+// Once the answers are out the photos no longer drag, but they still open large.
 deck.addEventListener("click", (e) => {
-  if (!pickedTile || e.target.closest(".mt-tile")) return;
-  const zone = dropZone(e.target);
-  if (zone && zone.closest(".slide") === pickedTile.closest(".slide")) {
-    placeTile(pickedTile, zone);
-    pickTile(null);
-  }
+  const tile = e.target.closest(".graded .mt-tile");
+  if (tile) zoomTile(tile);
 });
 
 /* ============ MUSIC ============ */
 // Two channels (see `music` in content.js): the background playlist, and the slideshow
-// music that takes over on slides marked data-music="trip". A track can be played three
-// ways: through Spotify's embedded player, through YouTube's, or from an audio file.
-// The two players sit in a small dock. The ♪ button opens a menu of what is playing,
-// with a button per song and a switch between Spotify and YouTube.
+// music that takes over on slides marked data-music="trip". A track can be played four
+// ways: through Spotify itself once someone has signed in ("connect"), through Spotify's
+// embedded player, through YouTube's, or from an audio file. The two embedded players sit
+// in a small dock. The ♪ button opens a menu of what is playing, with a button per song,
+// a switch between Spotify and YouTube, and the Spotify sign-in.
 const jingleBtn = document.getElementById("jingle");
 const musicMenu = document.getElementById("music-menu");
 const ytDock = document.getElementById("yt-dock");
@@ -441,6 +469,7 @@ const serviceDown = {spotify: false, youtube: false};
 // otherwise the other service, otherwise its audio file.
 function kindOf(t) {
   if (!t) return null;
+  if (musicSource === "spotify" && t.spotify && connect.status === "ready") return "connect";
   const order = musicSource === "spotify" ? ["spotify", "youtube"] : ["youtube", "spotify"];
   return order.find((service) => t[service] && !serviceDown[service]) || (t.file ? "file" : null);
 }
@@ -493,6 +522,236 @@ function serviceFailed(service) {
   refreshChannels();
 }
 
+/* ---- Spotify, signed in ---- */
+// With a Spotify app's Client ID in content.js (music.spotifyApp), "Connect Spotify" in the
+// ♪ menu signs a Premium listener in on Spotify's own page (PKCE, so no secret is kept
+// here). The songs then play whole, inside this page, through Spotify's Web Playback SDK:
+// a track played this way has the kind "connect". One player is shared by both channels.
+const SP_APP = music.spotifyApp || {};
+const SP_HERE = location.origin + location.pathname.replace(/index\.html$/, "");
+const SP_REDIRECT = (SP_APP.redirects || []).includes(SP_HERE) ? SP_HERE : null;
+const SP_TOKENS = "fakemas-spotify";
+const SP_PKCE = "fakemas-spotify-pkce";
+const SP_SCOPES = "streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state";
+const connect = {
+  // off (no app, or not at a registered address) | signed-out | starting | ready | failed
+  status: SP_APP.client && SP_REDIRECT ? "signed-out" : "off",
+  problem: "",       // what to tell the listener when it is not working
+  player: null,
+  device: null,
+  owner: null,       // the channel that last asked for a song
+  id: null,          // that song's track ID
+  volume: 0.4,
+  playing: false,    // the owner wants its song playing
+  position: 0,       // the song's last known position, in ms
+  duration: 0,
+  ended: false,
+  onEnded: null,
+  startedAt: 0,      // when the song was last asked for
+  heardAt: 0,        // when it was last heard playing
+  ticket: 0          // bumped by every request, so a slow reply to an old one is ignored
+};
+
+function spTokens() {
+  try { return JSON.parse(localStorage.getItem(SP_TOKENS)); } catch (err) { return null; }
+}
+function spStore(tokens) {
+  try {
+    if (tokens) localStorage.setItem(SP_TOKENS, JSON.stringify(tokens));
+    else localStorage.removeItem(SP_TOKENS);
+  } catch (err) { /* private mode */ }
+}
+async function spTokenRequest(params) {
+  const reply = await fetch("https://accounts.spotify.com/api/token", {
+    method: "POST",
+    headers: {"Content-Type": "application/x-www-form-urlencoded"},
+    body: new URLSearchParams({client_id: SP_APP.client, ...params})
+  });
+  if (!reply.ok) throw new Error(`Spotify sign-in failed (${reply.status})`);
+  const d = await reply.json();
+  const old = spTokens() || {};
+  const tokens = {access: d.access_token, refresh: d.refresh_token || old.refresh, expires: Date.now() + (d.expires_in - 60) * 1000};
+  spStore(tokens);
+  return tokens;
+}
+// A token that is good right now: the saved one, or a fresh one if that has run out.
+let spRefreshing = null;
+async function spToken() {
+  const tokens = spTokens();
+  if (!tokens) throw new Error("not signed in");
+  if (Date.now() < tokens.expires) return tokens.access;
+  if (!spRefreshing) {
+    spRefreshing = spTokenRequest({grant_type: "refresh_token", refresh_token: tokens.refresh})
+      .finally(() => { spRefreshing = null; });
+  }
+  return (await spRefreshing).access;
+}
+
+const spBase64 = (bytes) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+// Off to Spotify's sign-in page. It sends the listener back here with a code.
+async function spSignIn() {
+  if (connect.status === "off") return;
+  const verifier = spBase64(crypto.getRandomValues(new Uint8Array(48)));
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
+  const state = spBase64(crypto.getRandomValues(new Uint8Array(12)));
+  sessionStorage.setItem(SP_PKCE, JSON.stringify({verifier, state, slide: cur + 1}));
+  location.assign(`https://accounts.spotify.com/authorize?${new URLSearchParams({
+    client_id: SP_APP.client,
+    response_type: "code",
+    redirect_uri: SP_REDIRECT,
+    code_challenge_method: "S256",
+    code_challenge: spBase64(new Uint8Array(digest)),
+    scope: SP_SCOPES,
+    state
+  })}`);
+}
+// Back from Spotify's sign-in page: swap the code for tokens, and put the address (and the
+// slide) back as they were.
+async function spFinishSignIn() {
+  const query = new URLSearchParams(location.search);
+  if (!query.has("code") && !query.has("error")) return;
+  let saved = null;
+  try { saved = JSON.parse(sessionStorage.getItem(SP_PKCE)); sessionStorage.removeItem(SP_PKCE); } catch (err) { /* no session storage */ }
+  history.replaceState(null, "", location.pathname + (saved && saved.slide ? `#${saved.slide}` : location.hash));
+  if (!query.has("code")) { connect.problem = "Spotify sign-in was cancelled."; return; }
+  if (!saved || saved.state !== query.get("state")) { connect.problem = "Spotify sign-in did not finish. Try again."; return; }
+  await spTokenRequest({grant_type: "authorization_code", code: query.get("code"), redirect_uri: SP_REDIRECT, code_verifier: saved.verifier});
+}
+
+function spFail(problem) {
+  connect.status = "failed";
+  connect.problem = problem;
+  connect.playing = false;
+  refreshChannels();
+}
+function spSignOut(problem = "") {
+  spStore(null);
+  if (connect.player) connect.player.disconnect();
+  connect.player = null;
+  connect.device = null;
+  connect.playing = false;
+  connect.status = "signed-out";
+  connect.problem = problem;
+  refreshChannels();
+}
+
+// Starts Spotify's player in this page. Resolves once it is ready, or has failed.
+let spStarting = null;
+function spStartPlayer() {
+  if (spStarting) return spStarting;
+  connect.status = "starting";
+  spStarting = new Promise((resolve) => {
+    const giveUp = setTimeout(() => { if (connect.status === "starting") spFail("Spotify's player did not start."); resolve(); }, 9000);
+    const done = () => { clearTimeout(giveUp); resolve(); };
+    window.onSpotifyWebPlaybackSDKReady = () => {
+      const player = new Spotify.Player({
+        name: "Fakemas Quiz",
+        getOAuthToken: (give) => { spToken().then(give, () => spSignOut("Spotify needs you to sign in again.")); },
+        volume: connect.volume
+      });
+      connect.player = player;
+      player.addListener("ready", ({device_id: device}) => {
+        connect.device = device;
+        connect.status = "ready";
+        connect.problem = "";
+        done();
+        refreshChannels();
+      });
+      // e.g. the connection dropped: the songs fall back to the other ways of playing
+      player.addListener("not_ready", () => {
+        if (connect.status !== "ready") return;
+        connect.status = "starting";
+        connect.playing = false;
+        refreshChannels();
+      });
+      player.addListener("initialization_error", () => { spFail("This browser cannot run Spotify's player. Use Chrome or Edge on a computer."); done(); });
+      player.addListener("authentication_error", () => { spSignOut("Spotify needs you to sign in again."); done(); });
+      player.addListener("account_error", () => { spFail("Spotify Premium is needed to play whole songs here."); done(); });
+      player.addListener("player_state_changed", spHeard);
+      player.connect().then((ok) => { if (!ok) { spFail("Spotify's player could not connect."); done(); } });
+    };
+    const script = document.createElement("script");
+    script.src = "https://sdk.scdn.co/spotify-player.js";
+    script.onerror = () => { spFail("Spotify is unreachable."); done(); };
+    document.head.append(script);
+  });
+  return spStarting;
+}
+
+// Asks the player for one song, from `position` ms in. `onEnded` runs when it finishes.
+async function spPlay(owner, id, position, volume, onEnded) {
+  const ticket = ++connect.ticket;
+  Object.assign(connect, {owner, id, volume, playing: true, position, duration: 0, ended: false, onEnded,
+    startedAt: performance.now(), heardAt: 0});
+  connect.player.setVolume(volume).catch(() => {});
+  try {
+    const token = await spToken();
+    if (ticket !== connect.ticket) return;
+    const reply = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${connect.device}`, {
+      method: "PUT",
+      headers: {Authorization: `Bearer ${token}`, "Content-Type": "application/json"},
+      body: JSON.stringify({uris: [`spotify:track:${id}`], position_ms: Math.max(0, Math.floor(position))})
+    });
+    if (ticket !== connect.ticket) return;
+    if (reply.status === 401) spSignOut("Spotify needs you to sign in again.");
+    else if (reply.status === 403) spFail("Spotify would not play that here. Premium is needed for whole songs.");
+  } catch (err) { /* offline or signed out: the watcher below tries again, or the sign-out has been dealt with */ }
+}
+function spPause(owner) {
+  if (connect.owner !== owner || !connect.playing) return;
+  connect.playing = false;
+  connect.ticket += 1;
+  if (connect.player) connect.player.pause().catch(() => {});
+}
+
+// What the player says it is doing. Spotify sends no "finished" message, so a song is over
+// when it reaches its end, stops in its last moments, or something else has come on instead.
+function spHeard(state) {
+  if (!state || !connect.owner || !connect.player) return;
+  const now = performance.now();
+  if (!connect.playing) {
+    if (!state.paused) connect.player.pause().catch(() => {});   // it came to life late
+    return;
+  }
+  const track = state.track_window && state.track_window.current_track;
+  const ours = track && (track.id === connect.id || (track.linked_from && track.linked_from.id === connect.id));
+  let over = false;
+  if (ours) {
+    connect.duration = state.duration || connect.duration;
+    if (!state.paused) { connect.position = state.position; connect.heardAt = now; }
+    const d = connect.duration;
+    over = d > 0 && (state.paused ? connect.heardAt > 0 && connect.position >= d - 3000 : state.position >= d - 1200);
+  } else {
+    // Spotify has moved on to a song of its own choosing: ours must have finished.
+    over = !state.paused && now - connect.startedAt > 6000;
+  }
+  if (over && !connect.ended) {
+    connect.ended = true;
+    connect.playing = false;
+    if (connect.onEnded) connect.onEnded();
+  }
+}
+// The player only reports changes, so ask it once a second while a song should be playing,
+// and ask for the song again if nothing has been heard of it for a while.
+setInterval(() => {
+  if (connect.status !== "ready" || !connect.playing || !connect.player) return;
+  connect.player.getCurrentState().then((state) => {
+    if (state) spHeard(state);
+    const now = performance.now();
+    const quiet = now - Math.max(connect.heardAt, connect.startedAt);
+    if (connect.playing && !connect.ended && quiet > 7000) {
+      spPlay(connect.owner, connect.id, connect.position, connect.volume, connect.onEnded);
+    }
+  }, () => {});
+}, 1000);
+
+// On load: finish a sign-in that is under way, then start the player if someone is signed in.
+const connectBoot = (async () => {
+  if (connect.status === "off") return;
+  try { await spFinishSignIn(); } catch (err) { connect.problem = "Spotify sign-in did not finish. Try again."; }
+  if (spTokens()) await spStartPlayer();
+})();
+
 // A channel plays its tracks one at a time: shuffled, each once per round.
 // The generated stand-in only plays when there is nothing else.
 function makeChannel(name, el, tracks, volume, label) {
@@ -524,6 +783,8 @@ function makeChannel(name, el, tracks, volume, label) {
   let spHeardAt = 0;        // when it last reported anything
   let spDone = false;       // the loaded song has played to its end
   let spSample = false;     // it is only playing a 30-second sample (not signed in)
+  // Where this channel's song is up to on the signed-in Spotify player, which it shares.
+  let cPos = 0;
 
   const pool = () => songs.filter((t) => !dead.has(t) && kindOf(t));
   const shuffled = (list) => {
@@ -648,9 +909,22 @@ function makeChannel(name, el, tracks, volume, label) {
     }).catch(() => serviceFailed("spotify"));
   }
 
+  /* ---- Spotify, signed in ---- */
+  const connectMine = () => connect.owner === name && connect.playing;
+  function connectStart() {
+    spPlay(name, now.spotify, cPos, level(), () => {
+      if (nowKind !== "connect") return;
+      cPos = 0;
+      if (!loops()) load(wantPlaying);
+      else if (wantPlaying) connectStart();
+    });
+  }
+
   function play() {
     wantPlaying = true;
-    if (nowKind === "spotify") {
+    if (nowKind === "connect") {
+      if (!connectMine()) connectStart();
+    } else if (nowKind === "spotify") {
       showSpotify();
     } else if (nowKind === "youtube") {
       if (ytReady) yt.playVideo();
@@ -660,6 +934,8 @@ function makeChannel(name, el, tracks, volume, label) {
     }
   }
   function quieten(except) {
+    // a song on the shared player is left where it is, to be picked up again from there
+    if (except !== "connect" && connectMine()) { cPos = connect.position; spPause(name); }
     if (except !== "youtube" && ytReady) yt.pauseVideo();
     if (except !== "spotify" && sp && (spAsked || !spPaused)) { spAsked = false; sp.pause(); }
     if (except !== "file" && !el.paused) el.pause();
@@ -674,7 +950,11 @@ function makeChannel(name, el, tracks, volume, label) {
     nowKind = kindOf(now);
     quieten(nowKind);
     if (nowKind !== "file") el.removeAttribute("src");
-    if (nowKind === "spotify") {
+    if (nowKind === "connect") {
+      cPos = 0;
+      if (andPlay) connectStart();
+      else spPause(name);
+    } else if (nowKind === "spotify") {
       useSpotify(now.spotify);
     } else if (nowKind === "youtube") {
       useYouTube(now.youtube);
@@ -707,11 +987,13 @@ function makeChannel(name, el, tracks, volume, label) {
     label,
     play,
     pause,
-    paused: () => (nowKind === "spotify" ? spStopped()
+    paused: () => (nowKind === "connect" ? !connectMine()
+      : nowKind === "spotify" ? spStopped()
       : nowKind === "youtube" ? !ytReady || ![YT.PlayerState.PLAYING, YT.PlayerState.BUFFERING].includes(yt.getPlayerState())
       : el.paused),
     restart: () => {
-      if (nowKind === "spotify") { if (sp) { spLastPos = 0; spDone = false; sp.seek(0); } }
+      if (nowKind === "connect") { cPos = 0; if (connectMine()) connectStart(); }
+      else if (nowKind === "spotify") { if (sp) { spLastPos = 0; spDone = false; sp.seek(0); } }
       else if (nowKind === "youtube") { if (ytReady) yt.seekTo(0); }
       else { try { el.currentTime = 0; } catch (err) { /* not loaded yet */ } }
     },
@@ -720,10 +1002,12 @@ function makeChannel(name, el, tracks, volume, label) {
     kind: () => nowKind,
     sampling: () => nowKind === "spotify" && spSample,
     choose: (track) => load(true, track),
-    // Spotify's player has no volume control, so only YouTube and files can be turned down.
+    // Spotify's embedded player has no volume control: signed in it can be turned down,
+    // as YouTube and files can.
     duck: (on) => {
       ducked = on;
       el.volume = level();
+      if (connectMine() && connect.player) connect.player.setVolume(level()).catch(() => {});
       if (ytReady) yt.setVolume(Math.round(level() * 100));
     },
     // The service changed (picked in the menu, or one failed): move the current song across.
@@ -741,7 +1025,8 @@ let musicWanted = true;
 let lastChannel = "jingle";
 
 const slideChannel = () => (channels && channels[els[cur].dataset.music] ? els[cur].dataset.music : "jingle");
-const wantedName = () => (musicWanted ? slideChannel() : null);
+// A slide marked data-music="none" stops the music for as long as it is up.
+const wantedName = () => (musicWanted && els[cur].dataset.music !== "none" ? slideChannel() : null);
 function channelWanted(channel) {
   return Boolean(channels) && channels[wantedName()] === channel;
 }
@@ -766,6 +1051,21 @@ function syncMusic() {
   paintMusicMenu();
 }
 
+// The Spotify sign-in, as it appears in the ♪ menu while Spotify is the chosen service.
+function connectMenu(from) {
+  if (from !== "spotify" || !SP_APP.client) return "";
+  if (connect.status === "off") {
+    return `<div class="mm-connect">For whole songs, open the quiz at ${esc((SP_APP.redirects || [""])[0].replace(/^https?:\/\//, ""))} and connect Spotify there.</div>`;
+  }
+  if (connect.status === "ready") {
+    return `<div class="mm-connect ok">Spotify connected: whole songs
+      <button type="button" class="mm-link" data-disconnect>Disconnect</button></div>`;
+  }
+  if (connect.status === "starting") return `<div class="mm-connect">Connecting to Spotify…</div>`;
+  return `<button type="button" class="mm-connect-btn" data-connect>Connect Spotify</button>
+    <div class="mm-connect">${esc(connect.problem || "Sign in with Premium to play whole songs.")}</div>`;
+}
+
 let musicMenuHtml = "";
 function paintMusicMenu() {
   jingleBtn.setAttribute("aria-pressed", String(musicWanted));
@@ -786,7 +1086,10 @@ function paintMusicMenu() {
         `<button type="button" class="mm-src${key === from ? " now" : ""}" data-source="${key}"` +
         `${key === from ? ' aria-pressed="true"' : ' aria-pressed="false"'}${serviceDown[key] ? " disabled" : ""}>${text}</button>`).join("")}
     </div>
-    ${channel.sampling() ? `<div class="mm-note">Spotify is only playing 30-second samples here. Sign in at open.spotify.com in this browser and reload, or switch to YouTube.</div>` : ""}
+    ${connectMenu(from)}
+    ${channel.sampling() ? `<div class="mm-note">Spotify is only playing 30-second samples here. ${
+      connect.status === "off" ? "Sign in at open.spotify.com in this browser and reload, or switch to YouTube."
+        : "Connect Spotify for whole songs, or switch to YouTube."}</div>` : ""}
     <button type="button" class="mm-mute" data-mute>${musicWanted ? "Mute music" : "Unmute music"}</button>`;
   // Only touch the page when something changed: this runs on every click and key press, and
   // rebuilding the buttons mid-click would swallow the click.
@@ -821,6 +1124,10 @@ musicMenu.addEventListener("click", (e) => {
   if (!btn || !channels) return;
   if ("mute" in btn.dataset) {
     toggleMute();
+  } else if ("connect" in btn.dataset) {
+    spSignIn();
+  } else if ("disconnect" in btn.dataset) {
+    spSignOut();
   } else if (btn.dataset.source) {
     musicSource = btn.dataset.source;
     try { localStorage.setItem(SOURCE_KEY, musicSource); } catch (err) { /* private mode */ }
@@ -861,7 +1168,7 @@ ytMin.onclick = (e) => {
   if (e.detail) e.currentTarget.blur();
 };
 
-Promise.all([present(music.playlist), present(music.slideshow)]).then(([background, slideshow]) => {
+Promise.all([present(music.playlist), present(music.slideshow), connectBoot]).then(([background, slideshow]) => {
   channels = {
     jingle: makeChannel("jingle", document.getElementById("jingle-audio"), background, 0.4, "Background playlist"),
     trip: makeChannel("trip", document.getElementById("trip-audio"), slideshow, 0.5, "Slideshow music")
@@ -870,9 +1177,13 @@ Promise.all([present(music.playlist), present(music.slideshow)]).then(([backgrou
 });
 paintMusicMenu();
 
-// Browsers block autoplay, so kick the music off on the first interaction.
+// Browsers block autoplay, so kick the music off on the first interaction. (Spotify's own
+// player also has to be told about that interaction before it may make a sound.)
 ["pointerdown", "keydown", "touchstart"].forEach((evt) =>
-  document.addEventListener(evt, syncMusic, {passive: true})
+  document.addEventListener(evt, () => {
+    if (connect.player && connect.player.activateElement) connect.player.activateElement().catch(() => {});
+    syncMusic();
+  }, {passive: true})
 );
 
 /* ============ SOUND EFFECTS ============ */
@@ -949,6 +1260,13 @@ deck.addEventListener("keydown", (e) => {
 });
 
 document.addEventListener("keydown", (e) => {
+  // With a photo open large, any key just puts it away.
+  if (!zoomEl.hidden) { e.preventDefault(); closeZoom(); return; }
+  // Typing in a text box is just typing: no shortcuts, and Escape hands the keyboard back.
+  if (e.target instanceof Element && e.target.closest("textarea, input")) {
+    if (e.key === "Escape") e.target.blur();
+    return;
+  }
   // A card that is already face-up no longer swallows Space, so it carries on revealing.
   if (isUnflipped(e.target) && (e.key === " " || e.key === "Enter")) return;
   // A focused timeline or scoreboard button gets pressed, rather than advancing the deck.

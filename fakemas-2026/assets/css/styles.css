@@ -106,8 +106,7 @@ body{
 
 /* write boxes */
 .writes{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:20px;width:100%}
-.write{min-height:clamp(130px,26vh,230px);padding:14px;border-radius:10px;text-align:left;
-  background:repeating-linear-gradient(transparent 0 31px,rgba(120,70,20,.35) 31px 32px),rgba(255,255,255,.35);border:2px solid var(--gold-d)}
+.write{min-height:clamp(130px,26vh,230px);padding:14px;border-radius:10px;text-align:left;border:2px solid var(--gold-d)}
 .write b{font-family:'Cinzel',serif;color:var(--red-d);font-size:1.05rem;display:block}
 .write small{font-family:'Playfair Display',serif;font-style:italic;color:#6a3a20}
 @media(max-width:640px){.writes{grid-template-columns:1fr}}
@@ -1056,6 +1055,355 @@ body{
   #home-btn{left:12px;bottom:62px;width:40px;height:34px;padding:0}
   #home-btn .hb-lbl{display:none}
   #timeline{left:58px}
+}
+
+/* ============ typed answers on the naughty-list slide ============ */
+/* The ruled lines belong to the text box now, so what is typed sits on them. */
+.write{display:flex;flex-direction:column;background:rgba(255,255,255,.35)}
+.write textarea{flex:1;width:100%;min-height:96px;margin-top:6px;padding:0 2px;border:0;outline:0;resize:none;
+  font-family:'Playfair Display',serif;font-style:italic;font-weight:700;font-size:1.25rem;line-height:32px;color:#2b1408;
+  background:repeating-linear-gradient(transparent 0 31px,rgba(120,70,20,.35) 31px 32px) local}
+.write textarea::placeholder{color:rgba(90,50,20,.45);font-weight:500}
+.write:focus-within{border-color:var(--red);box-shadow:0 0 0 3px rgba(163,18,28,.2)}
+
+/* ============ intermission: the hype reel ============ */
+/* When the slide arrives it counts down behind hazard tape, slams the title in, and only
+   then spins the clip on. Every piece rests in its final state, so once the animations
+   are over (or with reduced motion) the slide is simply the title above the clip. */
+.interval{--slam:1.7;overflow:hidden}
+.hype{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.hype > *{position:absolute}
+.hype-title,.interval-clip{position:relative;z-index:2}
+
+/* spinning rays that run through the rainbow, then settle to a faint gold */
+.hype-rays{inset:-60%;opacity:.16;background:repeating-conic-gradient(from 0deg,rgba(255,215,90,.9) 0 6deg,transparent 6deg 18deg);
+  -webkit-mask-image:radial-gradient(circle,transparent 0,#000 16%,transparent 60%);mask-image:radial-gradient(circle,transparent 0,#000 16%,transparent 60%)}
+.slide.active .hype-rays{animation:hype-spin 26s linear infinite,hype-rays 6.8s ease both}
+@keyframes hype-spin{to{transform:rotate(360deg)}}
+@keyframes hype-rays{
+  0%{opacity:0;filter:hue-rotate(0deg)}
+  8%{opacity:.8}
+  50%{opacity:.95;filter:hue-rotate(300deg)}
+  82%{opacity:.85;filter:hue-rotate(720deg)}
+  100%{opacity:.16;filter:hue-rotate(720deg)}}
+
+/* a flash on every beat: 3, 2, 1, and a big one for the title */
+.hype-flash{inset:0;background:#fff;opacity:0}
+.slide.active .hype-flash{animation:hype-flash 6.8s linear both}
+@keyframes hype-flash{
+  0%{opacity:.9}3%{opacity:0}
+  7.3%{opacity:0}7.4%{opacity:.5}11%{opacity:0}
+  22%{opacity:0}22.1%{opacity:.5}26%{opacity:0}
+  36.7%{opacity:0}36.8%{opacity:.5}40%{opacity:0}
+  51.4%{opacity:0}51.5%{opacity:1}61%{opacity:0}
+  100%{opacity:0}}
+
+/* hazard tape: in from one side, scrolling, out of the other */
+.hype-tape{left:-6%;right:-6%;height:clamp(34px,8vh,70px);display:grid;place-items:center;overflow:hidden;rotate:-2deg;transform:translateX(-115%);
+  background:repeating-linear-gradient(-45deg,#f7c600 0 26px,#141414 26px 52px);box-shadow:0 6px 20px rgba(0,0,0,.6)}
+.hype-tape.top{top:6%}
+.hype-tape.bottom{bottom:6%;rotate:2deg;transform:translateX(115%)}
+.hype-tape span{padding:.2em 1.2em;background:#141414;color:#f7c600;font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:.3em;
+  font-size:clamp(.8rem,2.6vh,1.5rem);text-transform:uppercase;white-space:nowrap}
+.slide.active .hype-tape{animation:hype-tape-l 6.8s cubic-bezier(.2,.8,.3,1) both,hype-stripes .6s linear infinite}
+.slide.active .hype-tape.bottom{animation-name:hype-tape-r,hype-stripes}
+@keyframes hype-tape-l{0%{transform:translateX(-115%)}6%{transform:translateX(0)}80%{transform:translateX(0)}90%,100%{transform:translateX(115%)}}
+@keyframes hype-tape-r{0%{transform:translateX(115%)}6%{transform:translateX(0)}80%{transform:translateX(0)}90%,100%{transform:translateX(-115%)}}
+@keyframes hype-stripes{to{background-position:73.54px 0}}
+
+/* 3, 2, 1: each number crashes in, holds for a beat and is sucked away */
+.hype-count{inset:0;display:grid;place-items:center}
+.hype-count b{grid-area:1/1;opacity:0;font-family:'Oswald',sans-serif;font-weight:700;line-height:1;font-size:clamp(9rem,46vh,26rem);
+  color:#ffe27a;-webkit-text-stroke:.04em #7a0a10;text-shadow:0 0 .12em #ff3b2f,0 0 .4em rgba(255,120,40,.9),0 .06em 0 #7a0a10}
+.slide.active .hype-count b{animation:hype-count 1s cubic-bezier(.2,.9,.3,1) both;animation-delay:calc(.5s + var(--n)*1s)}
+@keyframes hype-count{
+  0%{opacity:0;transform:scale(4.5) rotate(-18deg);filter:blur(10px)}
+  18%{opacity:1;transform:scale(1) rotate(0);filter:none}
+  28%{transform:scale(1.12)}
+  70%{opacity:1;transform:scale(.95)}
+  100%{opacity:0;transform:scale(.15) rotate(14deg)}}
+
+/* a shockwave ring on each beat */
+.hype-ring{left:50%;top:50%;width:40vmin;height:40vmin;margin:-20vmin 0 0 -20vmin;border-radius:50%;border:.9vmin solid #ffe27a;opacity:0;
+  box-shadow:0 0 6vmin rgba(255,180,60,.9),inset 0 0 4vmin rgba(255,90,40,.7)}
+.slide.active .hype-ring{animation:hype-ring 1s ease-out both;animation-delay:calc(.5s + var(--n)*1s)}
+@keyframes hype-ring{0%{opacity:.95;transform:scale(.2)}100%{opacity:0;transform:scale(4)}}
+
+/* the burst that flies out from behind the title */
+.hype-burst{left:50%;top:50%;width:0;height:0}
+.hype-burst i{position:absolute;left:0;top:0;margin:-.6em 0 0 -.6em;font-style:normal;font-size:clamp(2rem,9vh,5rem);opacity:0}
+.slide.active .hype-burst i{animation:hype-burst 1.7s cubic-bezier(.1,.7,.3,1) both;animation-delay:calc(3.5s + var(--k)*.03s)}
+@keyframes hype-burst{
+  0%{opacity:1;transform:rotate(var(--a)) translateX(0) rotate(calc(var(--a)*-1)) scale(.3)}
+  70%{opacity:1}
+  100%{opacity:0;transform:rotate(var(--a)) translateX(85vmax) rotate(calc(var(--a)*-1 + 540deg)) scale(1.5)}}
+
+/* the billing, which streaks across under the title */
+.hype-star{left:0;right:0;top:calc(50% + 12vh);text-align:center;opacity:0;font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:.35em;
+  text-transform:uppercase;font-size:clamp(1rem,4.2vh,2.3rem);color:#fff;text-shadow:0 0 .5em #ff3b2f,0 0 1em #ff8a1e}
+.slide.active .hype-star{animation:hype-star 2.1s ease both;animation-delay:3.9s}
+@keyframes hype-star{
+  0%{opacity:0;transform:translateX(-60vw) skewX(-20deg)}
+  18%{opacity:1;transform:translateX(0) skewX(0)}
+  76%{opacity:1;transform:translateX(0)}
+  100%{opacity:0;transform:translateX(60vw) skewX(20deg)}}
+
+/* the title: slams into the middle, shakes, then rises to sit above the clip */
+.hype-title{font-family:'Cinzel',serif;font-weight:900;text-transform:uppercase;letter-spacing:.14em;line-height:1.1;
+  font-size:clamp(1.5rem,5vw,3.6rem);color:transparent;background:linear-gradient(180deg,#fff6c8,#f5c13a 45%,#c9781a);
+  -webkit-background-clip:text;background-clip:text;
+  filter:drop-shadow(0 0 .25em rgba(255,150,40,.85)) drop-shadow(0 .06em 0 #5c0a10)}
+.slide.active .hype-title{animation:hype-title 3.3s both;animation-delay:3.5s}
+@keyframes hype-title{
+  0%{opacity:0;transform:translateY(34vh) scale(calc(var(--slam)*3.4)) rotate(-8deg)}
+  7%{opacity:1;transform:translateY(34vh) scale(var(--slam)) rotate(0)}
+  10%{transform:translateY(34vh) scale(calc(var(--slam)*1.1)) rotate(2deg)}
+  13%{transform:translate(-1.2vw,34vh) scale(var(--slam)) rotate(-2deg)}
+  16%{transform:translate(1.2vw,34vh) scale(calc(var(--slam)*1.03)) rotate(1.5deg)}
+  19%{transform:translateY(34vh) scale(var(--slam)) rotate(0)}
+  40%{transform:translateY(34vh) scale(calc(var(--slam)*1.1))}
+  62%{opacity:1;transform:translateY(34vh) scale(var(--slam))}
+  100%{opacity:1;transform:none}}
+
+/* and only then the clip: it spins on, lands, and its frame keeps pulsing */
+.slide.active .interval-clip{animation:hype-clip 1.2s cubic-bezier(.2,1.1,.3,1) 5.7s both,hype-glow 2.4s ease-in-out 6.9s infinite}
+@keyframes hype-clip{
+  0%{opacity:0;transform:scale(0) rotate(-720deg)}
+  70%{opacity:1;transform:scale(1.1) rotate(5deg)}
+  100%{opacity:1;transform:rotate(-1.5deg)}}
+@keyframes hype-glow{
+  0%,100%{box-shadow:0 18px 50px rgba(0,0,0,.55),0 0 0 rgba(255,190,60,0)}
+  50%{box-shadow:0 18px 50px rgba(0,0,0,.55),0 0 46px rgba(255,190,60,.85)}}
+
+@media(max-width:640px){.interval{--slam:1.05}}
+@media(prefers-reduced-motion:reduce){
+  .slide.active .hype *,.slide.active .hype-title,.slide.active .interval-clip{animation:none}
+}
+
+/* ============ the Spotify sign-in, in the music menu ============ */
+.mm-connect-btn{display:block;width:100%;margin-top:10px;cursor:pointer;padding:.6em .8em;border-radius:999px;text-align:center;
+  font-family:'Cinzel',serif;font-weight:700;font-size:.8rem;letter-spacing:.08em;color:#0b2a14;
+  border:1px solid #b9f5cc;background:linear-gradient(180deg,#3be477,#1db954)}
+.mm-connect-btn:hover{box-shadow:0 0 14px rgba(29,185,84,.6)}
+.mm-connect{margin-top:8px;font-family:'Playfair Display',serif;font-style:italic;font-size:.8rem;line-height:1.35;color:var(--parch)}
+.mm-connect.ok{font-style:normal;color:#8ff0b1}
+.mm-link{margin-left:.5em;padding:0;cursor:pointer;border:0;background:none;font:inherit;color:var(--parch);text-decoration:underline}
+
+/* ============ the sponsors reel, before the slideshow ============ */
+/* It borrows the intermission's rays, tape, rings, burst and flash (above) on its own
+   timings: "And now / a word from / our sponsors" (0 to 2.9s), then the title card
+   with a plane and palms (from 2.9s), then the sponsor's name slams in (5.9s).
+   Everything rests on the finished card, so that is what stays once it has played. */
+.sponsor{overflow:hidden}
+.sponsor .sp-card{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center}
+.slide.active.sponsor .hype-rays{animation-duration:26s,9s}
+.slide.active.sponsor .hype-tape{animation-duration:3.1s,.6s}
+.sponsor .hype-tape{background:repeating-linear-gradient(-45deg,#f5c13a 0 26px,#8c0f17 26px 52px)}
+.sponsor .hype-tape span{background:#3d0509;color:#fbeab7}
+.slide.active.sponsor .hype-flash{animation:sp-flash 9s linear both}
+@keyframes sp-flash{
+  0%{opacity:.9}3%{opacity:0}
+  32.1%{opacity:0}32.2%{opacity:1}39%{opacity:0}
+  65.4%{opacity:0}65.5%{opacity:1}72%{opacity:0}
+  100%{opacity:0}}
+.slide.active.sponsor .hype-burst i{animation-delay:calc(2.9s + var(--k)*.03s)}
+.slide.active.sponsor .hype-burst.late i{animation-delay:calc(5.9s + var(--k)*.03s)}
+
+/* the three lines of the announcement: each slams in, then they leave together */
+.sp-lead{inset:0;display:grid;place-content:center;gap:.05em;text-align:center}
+.sp-lead b{display:block;opacity:0;font-family:'Oswald',sans-serif;font-weight:700;line-height:1.05;text-transform:uppercase;
+  letter-spacing:.05em;font-size:clamp(1.6rem,min(13vh,11.5vw),7.5rem);color:#fff;
+  text-shadow:0 0 .15em #ff8a1e,0 0 .5em rgba(255,60,40,.85),0 .05em 0 #5c0a10}
+.sp-lead b:last-child{color:#ffe27a;font-size:clamp(1.8rem,min(16vh,12.5vw),9.5rem)}
+.slide.active .sp-lead b{animation:sp-in .45s cubic-bezier(.2,1.4,.4,1) both,sp-out .4s ease-in forwards;
+  animation-delay:calc(.25s + var(--n)*.6s),2.5s}
+@keyframes sp-in{0%{opacity:0;transform:scale(3.4) rotate(-6deg);filter:blur(8px)}100%{opacity:1;transform:none;filter:none}}
+@keyframes sp-out{0%{opacity:1;transform:none}100%{opacity:0;transform:scale(.2) translateY(-30vh)}}
+
+/* the title card */
+.sp-title{font-size:clamp(3.2rem,11vw,8.5rem)}
+.slide.active .sp-title{animation:sp-drop 1.1s both;animation-delay:2.9s}
+@keyframes sp-drop{
+  0%{opacity:0;transform:translateY(-80vh) rotate(-10deg);animation-timing-function:cubic-bezier(.5,0,1,.6)}
+  45%{opacity:1;transform:translateY(0) rotate(2deg) scale(1.06,.9);animation-timing-function:cubic-bezier(0,.5,.5,1)}
+  65%{transform:translateY(-12%) rotate(-1deg);animation-timing-function:cubic-bezier(.5,0,1,.6)}
+  82%{transform:translateY(0) scale(1.02,.96)}
+  100%{opacity:1;transform:none}}
+.sp-place{font-family:'Cinzel',serif;font-weight:700;letter-spacing:.3em;text-transform:uppercase;
+  font-size:clamp(.9rem,2.8vw,2rem);color:#9fe8dd;text-shadow:0 2px 10px rgba(0,0,0,.6)}
+.slide.active .sp-place{animation:sp-streak .7s cubic-bezier(.2,.9,.3,1) both;animation-delay:3.6s}
+@keyframes sp-streak{0%{opacity:0;transform:translateX(70vw) skewX(-24deg)}70%{opacity:1;transform:translateX(-1vw) skewX(4deg)}100%{opacity:1;transform:none}}
+.sp-by{margin-top:clamp(14px,4vh,40px);font-family:'Playfair Display',serif;font-style:italic;font-size:clamp(.9rem,2.2vw,1.5rem);color:#fff3d6}
+.slide.active .sp-by{animation:fx-fade .7s ease both;animation-delay:5.1s}
+/* the sponsor's plate: it slams in, a shine sweeps across, and it keeps a slow glow */
+.sp-name{position:relative;overflow:hidden;margin-top:.12em;padding:.05em .55em .1em;border-radius:16px;border:3px solid var(--gold);
+  background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.75));box-shadow:0 14px 40px rgba(0,0,0,.6),0 0 30px rgba(245,193,58,.35);
+  font-family:'Oswald',sans-serif;font-weight:700;line-height:1.15;letter-spacing:.04em;font-size:clamp(2.6rem,10vw,7rem)}
+.sp-name span{background:linear-gradient(180deg,#fffbe6,#f5c13a 50%,#c9781a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sp-name::after{content:"";position:absolute;inset:0;transform:translateX(-130%) skewX(-20deg);
+  background:linear-gradient(90deg,transparent 30%,rgba(255,255,255,.75) 50%,transparent 70%)}
+.slide.active .sp-name{animation:sp-slam .9s both,sp-glow 2.6s ease-in-out infinite;animation-delay:5.9s,7s}
+.slide.active .sp-name::after{animation:sp-shine 1.1s ease-in-out both;animation-delay:6.8s}
+@keyframes sp-slam{
+  0%{opacity:0;transform:scale(6) rotate(-7deg)}
+  28%{opacity:1;transform:scale(.94) rotate(0)}
+  40%{transform:scale(1.08) rotate(2deg)}
+  52%{transform:translateX(-1.2vw) rotate(-2deg)}
+  64%{transform:translateX(1vw) rotate(1deg)}
+  100%{opacity:1;transform:none}}
+@keyframes sp-shine{0%{transform:translateX(-130%) skewX(-20deg)}100%{transform:translateX(130%) skewX(-20deg)}}
+@keyframes sp-glow{
+  0%,100%{box-shadow:0 14px 40px rgba(0,0,0,.6),0 0 30px rgba(245,193,58,.35)}
+  50%{box-shadow:0 14px 40px rgba(0,0,0,.6),0 0 70px rgba(245,193,58,.9)}}
+
+/* a plane across the sky, and a palm swaying in each bottom corner */
+.sp-plane{left:0;top:50%;opacity:0;font-size:clamp(2.6rem,12vh,6rem)}
+.slide.active .sp-plane{animation:sp-fly 2.4s linear both;animation-delay:3.1s}
+@keyframes sp-fly{
+  0%{opacity:1;transform:translate(-20vw,30vh) rotate(-14deg)}
+  50%{transform:translate(48vw,-22vh) rotate(-4deg)}
+  100%{opacity:1;transform:translate(115vw,-44vh) rotate(8deg)}}
+.sp-palm{bottom:-2vh;font-size:clamp(5rem,34vh,16rem);line-height:1;transform-origin:50% 100%;filter:drop-shadow(0 10px 20px rgba(0,0,0,.5))}
+.sp-palm.l{left:1vw}
+.sp-palm.r{right:1vw}
+.slide.active .sp-palm{animation:sp-grow .9s cubic-bezier(.2,1.4,.4,1) both,sp-sway 4s ease-in-out infinite;animation-delay:3.2s,4.1s}
+.slide.active .sp-palm.r{animation-delay:3.4s,4.3s;animation-direction:normal,reverse}
+@keyframes sp-grow{0%{opacity:0;transform:translateY(60%) scale(.2)}100%{opacity:1;transform:none}}
+@keyframes sp-sway{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+
+@media(max-width:640px){
+  .sp-palm{font-size:min(22vh,36vw);opacity:.85}
+}
+@media(prefers-reduced-motion:reduce){
+  .slide.active.sponsor .hype *,.slide.active.sponsor .sp-card *,.slide.active .sp-name::after{animation:none}
+}
+
+/* ============ a bird photo, opened large ============ */
+#zoom{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:3vmin;background:rgba(6,1,3,.88);cursor:zoom-out}
+#zoom[hidden]{display:none}
+#zoom figure{position:relative;margin:0;animation:zoom-in .28s cubic-bezier(.2,1.2,.4,1)}
+#zoom img{display:block;width:min(92vw,calc(86vh*4/3));max-height:86vh;object-fit:contain;border-radius:14px;
+  border:5px solid var(--gold-d);box-shadow:0 30px 90px rgba(0,0,0,.8),0 0 60px rgba(233,196,106,.3);background:#000}
+#zoom figcaption{position:absolute;left:16px;top:16px;display:flex;align-items:center;gap:.5em;font-family:'Cinzel',serif;font-weight:900;
+  font-size:clamp(1.2rem,3.2vw,2.2rem);color:#fff5dc;text-shadow:0 2px 10px rgba(0,0,0,.8)}
+#zoom figcaption b{display:grid;place-items:center;min-width:1.7em;height:1.7em;padding:0 .3em;border-radius:50%;
+  background:var(--red);border:2px solid var(--gold)}
+#zoom figcaption span{padding:.15em .7em;border-radius:999px;background:rgba(0,0,0,.6)}
+@keyframes zoom-in{0%{opacity:0;transform:scale(.6)}100%{opacity:1;transform:none}}
+.mt-tile{cursor:zoom-in}
+.match.graded .mt-tile{cursor:zoom-in}
+@media(prefers-reduced-motion:reduce){#zoom figure{animation:none}}
+
+/* ============ the record screech, before the code-words round ============ */
+/* The slide lurches in, the record spins and is yanked to a stop, "Hold on." slams down
+   and the rest of the wording follows a line at a time. */
+.slide.active.screech .parch{animation:screech-jolt .55s cubic-bezier(.3,.7,.3,1) both}
+@keyframes screech-jolt{
+  0%{transform:translateX(-6vw) rotate(-3deg)}18%{transform:translateX(3vw) rotate(2.4deg)}
+  36%{transform:translateX(-2vw) rotate(-1.6deg)}56%{transform:translateX(1vw) rotate(.8deg)}100%{transform:none}}
+.screech h2.q{padding-top:clamp(10px,2vh,18px)!important}
+/* the wording is tall, so the reveal underneath it is kept small */
+.screech .stage{min-height:clamp(120px,20vh,200px);margin-top:clamp(8px,1.6vh,16px)}
+.screech .mystery .box{font-size:clamp(2.6rem,9vh,4.4rem)}
+.screech .art{font-size:clamp(2.4rem,9vh,4.2rem)}
+@media(max-height:780px){
+  .screech .vinyl{width:11vh}
+  .screech .hold{font-size:clamp(2.2rem,7vw,4.2rem)}
+  .screech .stage{min-height:17vh}
+}
+.vinyl{position:relative;display:block;width:clamp(64px,15vh,140px);aspect-ratio:1;margin:0 auto .2em;border-radius:50%;
+  background:conic-gradient(from 20deg,transparent 0 18deg,rgba(255,255,255,.22) 30deg,transparent 44deg 198deg,rgba(255,255,255,.16) 210deg,transparent 224deg),
+    repeating-radial-gradient(circle,#161616 0 2px,#2b2b2b 2px 3.5px);
+  box-shadow:0 8px 20px rgba(60,30,0,.45)}
+.vinyl::after{content:"";position:absolute;inset:32%;border-radius:50%;
+  background:radial-gradient(circle,#111 0 12%,var(--gold) 13% 22%,var(--red) 23%)}
+.slide.active .vinyl{animation:vinyl-screech 1.5s cubic-bezier(.2,.6,.2,1) both}
+@keyframes vinyl-screech{
+  0%{transform:rotate(0)}40%{transform:rotate(700deg)}52%{transform:rotate(600deg)}
+  60%{transform:rotate(650deg)}70%{transform:rotate(622deg)}100%{transform:rotate(630deg)}}
+.hold{display:block;font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;line-height:1;letter-spacing:.03em;
+  font-size:clamp(2.4rem,9vw,5.4rem);color:var(--red);text-shadow:0 .04em 0 rgba(60,10,0,.35)}
+.slide.active .hold{animation:hold-slam .5s cubic-bezier(.2,1.5,.4,1) .6s both}
+@keyframes hold-slam{0%{opacity:0;transform:scale(4) rotate(-10deg)}100%{opacity:1;transform:rotate(-3deg)}}
+.hold{transform:rotate(-3deg)}
+.hold-q,.hold-line,.hold-points{display:block}
+.hold-q{margin-top:.3em}
+.hold-line{margin-top:.35em;font-size:.68em;font-style:italic;font-weight:500}
+.hold-points{margin-top:.8em;font-family:'Cinzel',serif;font-weight:700;font-size:.44em;letter-spacing:.1em;text-transform:uppercase;color:#7a5a1c}
+.slide.active .hold-q{animation:fx-fade .6s ease 1.2s both}
+.slide.active .hold-line{animation:fx-fade .6s ease 1.9s both}
+.slide.active .hold-points{animation:fx-fade .6s ease 2.6s both}
+@media(prefers-reduced-motion:reduce){
+  .slide.active.screech .parch,.slide.active .vinyl,.slide.active .hold,.slide.active .hold-q,.slide.active .hold-line,.slide.active .hold-points{animation:none}
+}
+
+/* ============ the bird-watch card, before the bird round's poster ============ */
+/* A sky with birds flying across it. Each bird is locked onto and tagged "Spotted!"
+   somewhere along its way, while a pair of binoculars scans from the bottom of the
+   slide. The card with the question drops in over the top. */
+.birdwatch{overflow:hidden;background:
+  radial-gradient(ellipse at 82% 12%,rgba(255,236,170,.5),transparent 34%),
+  linear-gradient(180deg,#0c3f66 0%,#2a7fa6 52%,#3f9a7a 100%)}
+.spot-sky{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.spot-cloud{position:absolute;width:34vw;height:9vh;border-radius:50%;background:rgba(255,255,255,.5);filter:blur(14px)}
+.slide.active .spot-cloud{animation:spot-drift 60s linear infinite}
+@keyframes spot-drift{from{transform:translateX(-45vw)}to{transform:translateX(125vw)}}
+
+.spot-bird{position:absolute;left:0;top:var(--top);font-size:clamp(2rem,7.5vh,4.2rem);line-height:1;transform:translateX(-18vw)}
+.slide.active .spot-bird{animation:spot-fly var(--dur) linear var(--delay) infinite}
+.slide.active .spot-bird.rtl{animation-direction:reverse}
+@keyframes spot-fly{from{transform:translateX(-18vw)}to{transform:translateX(112vw)}}
+/* the emoji face left, so a bird flying left to right is turned round */
+.spot-bird i{display:block;font-style:normal;transform:scaleX(-1);filter:drop-shadow(0 6px 8px rgba(0,0,0,.3))}
+.spot-bird.rtl i{transform:none}
+.slide.active .spot-bird i{animation:spot-bob .7s ease-in-out infinite alternate}
+@keyframes spot-bob{from{translate:0 -7px;rotate:-6deg}to{translate:0 7px;rotate:6deg}}
+
+/* the lock-on: a ring with cross-hairs closes on the bird, and a tag pops up above it */
+.spot-ring{position:absolute;inset:-42%;border-radius:50%;border:3px solid #ffe27a;opacity:0;
+  box-shadow:0 0 18px rgba(255,226,122,.9),inset 0 0 14px rgba(255,226,122,.5)}
+.spot-ring::before,.spot-ring::after{content:"";position:absolute;background:#ffe27a}
+.spot-ring::before{left:50%;top:-14%;bottom:-14%;width:2px;margin-left:-1px}
+.spot-ring::after{top:50%;left:-14%;right:-14%;height:2px;margin-top:-1px}
+.spot-bird b{position:absolute;left:50%;bottom:118%;margin-left:-3.4em;width:6.8em;padding:.25em 0;border-radius:999px;text-align:center;opacity:0;
+  font-family:'Cinzel',serif;font-weight:900;font-size:.26em;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;
+  color:#fff;background:#1f8a45;border:2px solid #d7ffd9;box-shadow:0 4px 10px rgba(0,0,0,.35)}
+.slide.active .spot-ring{animation:spot-lock var(--dur) linear var(--delay) infinite}
+.slide.active .spot-bird b{animation:spot-tag var(--dur) linear var(--delay) infinite}
+.slide.active .spot-bird.late .spot-ring{animation-name:spot-lock-late}
+.slide.active .spot-bird.late b{animation-name:spot-tag-late}
+@keyframes spot-lock{0%,18%{opacity:0;transform:scale(2.6) rotate(0)}24%{opacity:1;transform:scale(1) rotate(90deg)}42%{opacity:1;transform:scale(1) rotate(90deg)}48%,100%{opacity:0;transform:scale(.5) rotate(90deg)}}
+@keyframes spot-tag{0%,24%{opacity:0;transform:translateY(10px) scale(.5)}28%{opacity:1;transform:none}42%{opacity:1;transform:none}48%,100%{opacity:0;transform:translateY(-8px)}}
+@keyframes spot-lock-late{0%,50%{opacity:0;transform:scale(2.6) rotate(0)}56%{opacity:1;transform:scale(1) rotate(90deg)}74%{opacity:1;transform:scale(1) rotate(90deg)}80%,100%{opacity:0;transform:scale(.5) rotate(90deg)}}
+@keyframes spot-tag-late{0%,56%{opacity:0;transform:translateY(10px) scale(.5)}60%{opacity:1;transform:none}74%{opacity:1;transform:none}80%,100%{opacity:0;transform:translateY(-8px)}}
+
+/* the binoculars: up from the bottom edge, then scanning from side to side */
+.spot-binos{position:absolute;left:50%;bottom:-3vh;width:clamp(150px,34vh,330px);margin-left:calc(clamp(150px,34vh,330px)/-2);overflow:visible;
+  transform-origin:50% 100%;filter:drop-shadow(0 -4px 16px rgba(0,0,0,.4))}
+.slide.active .spot-binos{animation:spot-rise .8s cubic-bezier(.2,1.3,.4,1) .15s both,spot-scan 6s ease-in-out 1s infinite}
+@keyframes spot-rise{from{transform:translateY(110%)}to{transform:none}}
+@keyframes spot-scan{0%,100%{transform:rotate(-13deg)}50%{transform:rotate(13deg)}}
+.spot-binos .beam{fill:url(#spot-beam);opacity:.5}
+.slide.active .spot-binos .glint{animation:spot-glint 3s ease-in-out infinite}
+@keyframes spot-glint{0%,100%{opacity:.25}50%{opacity:.95}}
+
+/* the card */
+.spot-card{position:relative;z-index:2;width:min(620px,92%);padding:clamp(14px,2.4vh,26px) clamp(16px,2.6vw,32px);margin-bottom:clamp(40px,12vh,130px);text-align:center}
+.spot-card .spot-tag{font-family:'Cinzel',serif;font-weight:700;font-size:clamp(.7rem,1.4vw,.9rem);letter-spacing:.26em;text-transform:uppercase;color:#7a5a1c}
+.spot-card h2{margin:.05em 0 .1em;font-family:'Great Vibes',cursive;font-weight:400;line-height:1.05;font-size:clamp(2rem,4.6vw,3.3rem);color:var(--red-d)}
+.spot-card p{font-size:clamp(.95rem,1.8vw,1.2rem)}
+.spot-card .ribbon{margin:.5em 0 0;padding:.5em 1.6em;font-size:clamp(.78rem,1.45vw,1rem)}
+.spot-card .ribbon b{display:inline-block;color:var(--red);font-size:1.25em}
+.slide.active .spot-card{animation:spot-card .8s cubic-bezier(.2,1.3,.4,1) .5s both}
+.slide.active .spot-card .ribbon b{animation:spot-pulse 1.2s ease-in-out 1.6s infinite}
+@keyframes spot-card{0%{opacity:0;transform:translateY(-60vh) rotate(-8deg)}70%{opacity:1;transform:translateY(2vh) rotate(1.5deg)}100%{opacity:1;transform:none}}
+@keyframes spot-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
+
+@media(prefers-reduced-motion:reduce){
+  .slide.active .spot-cloud,.slide.active .spot-bird,.slide.active .spot-bird *,.slide.active .spot-binos,.slide.active .spot-binos .glint,
+  .slide.active .spot-card,.slide.active .spot-card .ribbon b{animation:none}
+  .spot-bird{transform:translateX(var(--rest,40vw))}
+  .spot-ring,.spot-bird b{opacity:1}
 }
 
 /* jingle toggle */
